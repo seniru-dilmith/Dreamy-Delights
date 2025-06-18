@@ -225,8 +225,8 @@ export default function MenuPage() {
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Size</label>
-                  <select className="w-full p-2 border rounded-md">
+                  <label htmlFor="size-select" className="block text-sm font-medium mb-2">Size</label>
+                  <select id="size-select" className="w-full p-2 border rounded-md">
                     {selectedProduct.customizations.sizes.map((size: string) => (
                       <option key={size} value={size}>
                         {size}
@@ -236,8 +236,8 @@ export default function MenuPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Flavor</label>
-                  <select className="w-full p-2 border rounded-md">
+                  <label htmlFor="flavor-select" className="block text-sm font-medium mb-2">Flavor</label>
+                  <select id="flavor-select" className="w-full p-2 border rounded-md">
                     {selectedProduct.customizations.flavors.map((flavor: string) => (
                       <option key={flavor} value={flavor}>
                         {flavor}
@@ -247,8 +247,8 @@ export default function MenuPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Decoration</label>
-                  <select className="w-full p-2 border rounded-md">
+                  <label htmlFor="decoration-select" className="block text-sm font-medium mb-2">Decoration</label>
+                  <select id="decoration-select" className="w-full p-2 border rounded-md">
                     {selectedProduct.customizations.decorations.map((decoration: string) => (
                       <option key={decoration} value={decoration}>
                         {decoration}
