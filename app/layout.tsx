@@ -14,7 +14,6 @@ export const metadata: Metadata = {
   description:
     "Order fresh, delicious cakes and cupcakes from Dreamy Delights Bakery. Custom orders available with delivery.",
   keywords: "bakery, cakes, cupcakes, custom orders, fresh baked goods",
-    generator: 'v0.dev'
 }
 
 export default function RootLayout({
