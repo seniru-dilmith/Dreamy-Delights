@@ -9,19 +9,19 @@ const teamMembers = [
   {
     name: "Sarah Johnson",
     role: "Head Baker & Owner",
-    image: "/placeholder.svg?height=300&width=300",
+    image: "/logo-large.svg?height=300&width=300",
     bio: "With 20 years of baking experience, Sarah founded Dreamy Delights to share her passion for creating beautiful, delicious treats.",
   },
   {
     name: "Mike Chen",
     role: "Pastry Chef",
-    image: "/placeholder.svg?height=300&width=300",
+    image: "/logo-large.svg?height=300&width=300",
     bio: "Mike specializes in intricate cake decorating and brings artistic flair to every custom creation.",
   },
   {
     name: "Emily Davis",
     role: "Customer Relations",
-    image: "/placeholder.svg?height=300&width=300",
+    image: "/logo-large.svg?height=300&width=300",
     bio: "Emily ensures every customer has a sweet experience from order to delivery.",
   },
 ]
@@ -88,7 +88,7 @@ export default function AboutPage() {
               className="relative"
             >
               <Image
-                src="/placeholder.svg?height=500&width=600"
+                src="/logo-large.svg?height=500&width=600"
                 alt="Bakery Interior"
                 width={600}
                 height={500}
@@ -159,7 +159,7 @@ export default function AboutPage() {
               >
                 <Card className="overflow-hidden hover:shadow-xl transition-shadow duration-300">
                   <Image
-                    src={member.image || "/placeholder.svg"}
+                    src={member.image || "/logo-large.svg"}
                     alt={member.name}
                     width={300}
                     height={300}
