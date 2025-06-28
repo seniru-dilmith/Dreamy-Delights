@@ -6,33 +6,22 @@ import Link from "next/link"
 import { Star, ShoppingCart, Heart, Award } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { collection, getDocs } from "firebase/firestore"
+import { db } from "@/firebase/init"
+import { useEffect, useState } from "react"
 
-const featuredProducts = [
-  {
-    id: 1,
-    name: "Chocolate Dream Cupcake",
-    price: 4.99,
-    image: "/logo-large.png",
-    rating: 4.9,
-    description: "Rich chocolate cupcake with creamy frosting",
-  },
-  {
-    id: 2,
-    name: "Vanilla Birthday Cake",
-    price: 45.99,
-    image: "/logo-large.png",
-    rating: 4.8,
-    description: "Classic vanilla cake perfect for celebrations",
-  },
-  {
-    id: 3,
-    name: "Red Velvet Delight",
-    price: 5.99,
-    image: "/logo-large.png",
-    rating: 4.9,
-    description: "Moist red velvet with cream cheese frosting",
-  },
-]
+// Product type definition
+interface Product {
+  id: string | number;
+  name: string;
+  price: number;
+  image: string;
+  rating: number;
+  description: string;
+  category?: string;
+  featured?: boolean;
+}
+
 
 const testimonials = [
   {
@@ -53,6 +42,43 @@ const testimonials = [
 ]
 
 export default function HomePage() {
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFeaturedProducts = async () => {
+      try {
+        if (!db) {
+          console.warn("Firebase is not initialized.");
+          setFeaturedProducts([]);
+          setLoading(false);
+          return;
+        }
+
+        const querySnapshot = await getDocs(collection(db, "featured_products"));
+        const items: Product[] = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        } as Product));
+        
+        if (items.length === 0) {
+          console.log('No products found in Firestore, using fallback data');
+          setFeaturedProducts([]);
+        } else {
+          console.log(`Successfully loaded ${items.length} products from Firestore`);
+          setFeaturedProducts(items);
+        }
+      } catch (error) {
+        console.error("Error fetching featured products:", error);
+        console.log('Using fallback products due to error');
+        setFeaturedProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchFeaturedProducts();
+  }, []);
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -65,6 +91,7 @@ export default function HomePage() {
             width={800}
             height={300}
             className="object-cover object-center mx-auto"
+            style={{ width: "auto", height: "auto" }}
             priority
           />
         </div>
@@ -111,51 +138,70 @@ export default function HomePage() {
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {featuredProducts.map((product, index) => (
-              <motion.div
-                key={product.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                whileHover={{ y: -10 }}
-              >
-                <Card className="overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                  <div className="relative">
-                    <Image
-                      src={product.image || "/logo-large.png"}
-                      alt={product.name}
-                      width={300}
-                      height={300}
-                      className="w-full h-64 object-cover"
-                    />
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-lg"
-                    >
-                      <Heart className="h-5 w-5 text-pink-500" />
-                    </motion.button>
-                  </div>
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-xl font-semibold">{product.name}</h3>
-                      <div className="flex items-center">
-                        <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                        <span className="ml-1 text-sm text-gray-600">{product.rating}</span>
+            {loading ? (
+              // Loading skeletons
+              Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className="animate-pulse">
+                  <Card className="overflow-hidden">
+                    <div className="bg-gray-300 h-64 w-full"></div>
+                    <CardContent className="p-6">
+                      <div className="h-6 bg-gray-300 rounded mb-2"></div>
+                      <div className="h-4 bg-gray-300 rounded mb-4"></div>
+                      <div className="flex items-center justify-between">
+                        <div className="h-8 bg-gray-300 rounded w-20"></div>
+                        <div className="h-10 bg-gray-300 rounded w-24"></div>
                       </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              ))
+            ) : (
+              featuredProducts.map((product, index) => (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  whileHover={{ y: -10 }}
+                >
+                  <Card className="overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                    <div className="relative">
+                      <Image
+                        src={product.image || "/logo-large.png"}
+                        alt={product.name}
+                        width={300}
+                        height={300}
+                        className="w-full h-64 object-cover"
+                      />
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-lg"
+                      >
+                        <Heart className="h-5 w-5 text-pink-500" />
+                      </motion.button>
                     </div>
-                    <p className="text-gray-600 mb-4">{product.description}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-2xl font-bold text-pink-600">${product.price}</span>
-                      <Button className="bg-pink-500 hover:bg-pink-600">
-                        <ShoppingCart className="mr-2 h-4 w-4" />
-                        Add to Cart
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-xl font-semibold">{product.name}</h3>
+                        <div className="flex items-center">
+                          <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                          <span className="ml-1 text-sm text-gray-600">{product.rating}</span>
+                        </div>
+                      </div>
+                      <p className="text-gray-600 mb-4">{product.description}</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-2xl font-bold text-pink-600">${product.price}</span>
+                        <Button className="bg-pink-500 hover:bg-pink-600">
+                          <ShoppingCart className="mr-2 h-4 w-4" />
+                          Add to Cart
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))
+            )}
           </div>
         </div>
       </section>
@@ -274,7 +320,7 @@ export default function HomePage() {
                 asChild
                 size="lg"
                 variant="outline"
-                className="border-white text-white hover:bg-white hover:text-purple-600"
+                className="border-white hover:bg-white text-purple-600"
               >
                 <Link href="/contact">Contact Us</Link>
               </Button>
