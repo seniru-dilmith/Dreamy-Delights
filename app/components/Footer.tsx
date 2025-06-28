@@ -25,21 +25,21 @@ export default function Footer() {
               <div className="flex space-x-4">
                 <motion.a
                   whileHover={{ scale: 1.1 }}
-                  href="#"
+                  href="https://www.facebook.com/dreamydelights"
                   className="text-gray-400 hover:text-pink-400 transition-colors"
                 >
                   <Facebook className="h-5 w-5" />
                 </motion.a>
                 <motion.a
                   whileHover={{ scale: 1.1 }}
-                  href="#"
+                  href="https://www.instagram.com/dreamydelights"
                   className="text-gray-400 hover:text-pink-400 transition-colors"
                 >
                   <Instagram className="h-5 w-5" />
                 </motion.a>
                 <motion.a
                   whileHover={{ scale: 1.1 }}
-                  href="#"
+                  href="https://twitter.com/dreamydelights"
                   className="text-gray-400 hover:text-pink-400 transition-colors"
                 >
                   <Twitter className="h-5 w-5" />
@@ -68,15 +68,15 @@ export default function Footer() {
             <div className="space-y-3">
               <div className="flex items-center">
                 <MapPin className="h-4 w-4 mr-3 text-pink-400" />
-                <span className="text-gray-300">123 Sweet Street, Bakery City, BC 12345</span>
+                <span className="text-gray-300">Horana, Sri Lanka</span>
               </div>
               <div className="flex items-center">
                 <Phone className="h-4 w-4 mr-3 text-pink-400" />
-                <span className="text-gray-300">(555) 123-CAKE</span>
+                <span className="text-gray-300">(078) 830 9127</span>
               </div>
               <div className="flex items-center">
                 <Mail className="h-4 w-4 mr-3 text-pink-400" />
-                <span className="text-gray-300">hello@dreamydelights.com</span>
+                <span className="text-gray-300">sansilunikethma@gmail.com</span>
               </div>
             </div>
           </div>
@@ -88,8 +88,8 @@ export default function Footer() {
               <div className="flex items-center">
                 <Clock className="h-4 w-4 mr-3 text-pink-400" />
                 <div className="text-gray-300">
-                  <div>Mon-Fri: 7AM-8PM</div>
-                  <div>Sat-Sun: 8AM-9PM</div>
+                  <div>Mon-Fri: 7:00 AM-8:00 PM</div>
+                  <div>Sat-Sun: 8:00 AM-9:00 PM</div>
                 </div>
               </div>
             </div>

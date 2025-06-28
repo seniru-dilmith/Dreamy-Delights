@@ -54,7 +54,7 @@ export default function CartPage() {
                     <CardContent className="p-6">
                       <div className="flex items-center space-x-4">
                         <Image
-                          src={item.image || "/placeholder.svg"}
+                          src={item.image || "/logo-large.svg"}
                           alt={item.name}
                           width={80}
                           height={80}

@@ -25,3 +25,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# firebase
+dreamy-delights-882ff-firebase-adminsdk-fbsvc-e3a40b9a80.json
+.firebaserc
+firebase-debug.log
+firebase-debug.*.log
+storage.rules
+firestore.rules
+firestore.indexes.json
+firestore.json
