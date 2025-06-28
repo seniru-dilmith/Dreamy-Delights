@@ -12,7 +12,7 @@ const featuredProducts = [
     id: 1,
     name: "Chocolate Dream Cupcake",
     price: 4.99,
-    image: "/placeholder.svg?height=300&width=300",
+    image: "/logo-large.png",
     rating: 4.9,
     description: "Rich chocolate cupcake with creamy frosting",
   },
@@ -20,7 +20,7 @@ const featuredProducts = [
     id: 2,
     name: "Vanilla Birthday Cake",
     price: 45.99,
-    image: "/placeholder.svg?height=300&width=300",
+    image: "/logo-large.png",
     rating: 4.8,
     description: "Classic vanilla cake perfect for celebrations",
   },
@@ -28,7 +28,7 @@ const featuredProducts = [
     id: 3,
     name: "Red Velvet Delight",
     price: 5.99,
-    image: "/placeholder.svg?height=300&width=300",
+    image: "/logo-large.png",
     rating: 4.9,
     description: "Moist red velvet with cream cheese frosting",
   },
@@ -56,23 +56,32 @@ export default function HomePage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-purple-50">
-        <div className="absolute inset-0 bg-black/20" />
-        <Image src="/placeholder.svg?height=1080&width=1920" alt="Bakery Hero" fill className="object-cover" priority />
+      <section className="relative h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-purple-50 overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <Image
+            src="/logo-large.png"
+            alt="Dreamy Delights Background"
+            width={800}
+            height={300}
+            className="object-cover object-center mx-auto"
+            priority
+          />
+        </div>
+        <div className="absolute inset-0 bg-black/40" />
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="relative z-10 text-center text-white px-4"
+          className="relative z-10 text-center text-white px-10 sm:px-20 md:px-32 lg:px-40 xl:px-48"
         >
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
-            Dreamy Delights
-          </h1>
-          <p className="text-xl md:text-2xl mb-8 text-gray-200">Where Every Bite is a Sweet Dream Come True</p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" className="bg-pink-500 hover:bg-pink-600">
+            <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-5xl xl:text-6xl font-bold mb-32 sm:mb-32 md:mb-40 lg:mb-48 xl:mb-80 bg-gradient-to-r from-pink-300 to-purple-50 bg-clip-text text-transparent drop-shadow-lg">
+              Every Bite is a Sweet Dream Come True
+            </h1>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center max-w-md sm:max-w-lg mx-auto">
+            <Button asChild size="lg" className="bg-pink-500 hover:bg-pink-600 text-base sm:text-lg shadow-lg">
               <Link href="/menu">
-                <ShoppingCart className="mr-2 h-5 w-5" />
+                <ShoppingCart className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                 Order Now
               </Link>
             </Button>
@@ -80,7 +89,7 @@ export default function HomePage() {
               asChild
               variant="outline"
               size="lg"
-              className="border-white text-white hover:bg-white hover:text-gray-900"
+              className="border-white bg-white hover:bg-slate-200 text-gray-900 text-base sm:text-lg shadow-lg backdrop-blur-sm"
             >
               <Link href="/about">Learn Our Story</Link>
             </Button>
@@ -113,7 +122,7 @@ export default function HomePage() {
                 <Card className="overflow-hidden hover:shadow-xl transition-shadow duration-300">
                   <div className="relative">
                     <Image
-                      src={product.image || "/placeholder.svg"}
+                      src={product.image || "/logo-large.png"}
                       alt={product.name}
                       width={300}
                       height={300}
@@ -190,7 +199,7 @@ export default function HomePage() {
               className="relative"
             >
               <Image
-                src="/placeholder.svg?height=500&width=600"
+                src="/logo-large.png"
                 alt="Bakery Interior"
                 width={600}
                 height={500}

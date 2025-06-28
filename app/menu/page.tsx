@@ -17,7 +17,7 @@ const products = [
     name: "Chocolate Dream Cupcake",
     category: "Cupcakes",
     price: 4.99,
-    image: "/placeholder.svg?height=300&width=300",
+    image: "/logo-large.svg?height=300&width=300",
     rating: 4.9,
     description: "Rich chocolate cupcake with creamy frosting",
     customizations: {
@@ -31,7 +31,7 @@ const products = [
     name: "Vanilla Birthday Cake",
     category: "Cakes",
     price: 45.99,
-    image: "/placeholder.svg?height=300&width=300",
+    image: "/logo-large.svg?height=300&width=300",
     rating: 4.8,
     description: "Classic vanilla cake perfect for celebrations",
     customizations: {
@@ -45,7 +45,7 @@ const products = [
     name: "Red Velvet Delight",
     category: "Cupcakes",
     price: 5.99,
-    image: "/placeholder.svg?height=300&width=300",
+    image: "/logo-large.svg?height=300&width=300",
     rating: 4.9,
     description: "Moist red velvet with cream cheese frosting",
     customizations: {
@@ -59,7 +59,7 @@ const products = [
     name: "Chocolate Chip Cookies",
     category: "Cookies",
     price: 2.99,
-    image: "/placeholder.svg?height=300&width=300",
+    image: "/logo-large.svg?height=300&width=300",
     rating: 4.7,
     description: "Fresh baked chocolate chip cookies",
     customizations: {
@@ -73,7 +73,7 @@ const products = [
     name: "Strawberry Tart",
     category: "Pastries",
     price: 6.99,
-    image: "/placeholder.svg?height=300&width=300",
+    image: "/logo-large.svg?height=300&width=300",
     rating: 4.8,
     description: "Fresh strawberry tart with pastry cream",
     customizations: {
@@ -87,7 +87,7 @@ const products = [
     name: "Wedding Cake",
     category: "Cakes",
     price: 199.99,
-    image: "/placeholder.svg?height=300&width=300",
+    image: "/logo-large.svg?height=300&width=300",
     rating: 5.0,
     description: "Elegant multi-tier wedding cake",
     customizations: {
@@ -165,7 +165,7 @@ export default function MenuPage() {
               <Card className="overflow-hidden hover:shadow-xl transition-shadow duration-300">
                 <div className="relative">
                   <Image
-                    src={product.image || "/placeholder.svg"}
+                    src={product.image || "/logo-large.svg"}
                     alt={product.name}
                     width={300}
                     height={300}
