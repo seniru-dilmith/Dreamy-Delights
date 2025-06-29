@@ -192,17 +192,6 @@ exports.updateOrderStatus = functions.https.onCall(async (data, context) => {
 // These provide simple redirects to the new API structure
 
 /**
- * Get featured products - Legacy HTTP function
- * @deprecated Use /api/products/featured endpoint instead
- */
-exports.getFeaturedProducts = functions.https.onRequest((req, res) => {
-  res.status(301).json({
-    message: "This endpoint has moved. Please use /api/products/featured",
-    newEndpoint: "/api/products/featured",
-  });
-});
-
-/**
  * Get products - Legacy HTTP function
  * @deprecated Use /api/products endpoint instead
  */

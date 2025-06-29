@@ -36,31 +36,13 @@ class ProductController {
   }
 
   /**
-   * Get featured products
-   * @param {Object} req - Express request object
-   * @param {Object} res - Express response object
-   */
-  async getFeaturedProducts(req, res) {
-    try {
-      const result = await this.productService.getFeaturedProducts();
-      res.json(result);
-    } catch (error) {
-      console.error("Error fetching featured products:", error);
-      res.status(500).json({
-        success: false,
-        error: "Failed to fetch products",
-      });
-    }
-  }
-
-  /**
    * Create a new product (Admin only)
    * @param {Object} req - Express request object
    * @param {Object} res - Express response object
    */
   async createProduct(req, res) {
     try {
-      const {name, price, description, category, image, featured} = req.body;
+      const {name, price, description, category, image} = req.body;
 
       const productData = {
         name,
@@ -68,7 +50,6 @@ class ProductController {
         description,
         category,
         image,
-        featured: featured || false,
       };
 
       const result = await this.productService.createProduct(productData);
@@ -101,7 +82,7 @@ class ProductController {
         });
       }
 
-      const {name, price, description, category, image, featured} = req.body;
+      const {name, price, description, category, image} = req.body;
 
       const updateData = {
         name,
@@ -109,7 +90,6 @@ class ProductController {
         description,
         category,
         image,
-        featured: featured || false,
       };
 
       await this.productService.updateProduct(productId, updateData);
