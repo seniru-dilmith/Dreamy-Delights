@@ -47,7 +47,7 @@ export default function ContactPage() {
                 icon: <MapPin className="h-8 w-8 text-pink-500" />,
                 title: "Visit Us",
                 details: "Horana, Sri Lanka",
-                subtitle: "Come see our bakery"
+                subtitle: "Come and get served"
               },
               {
                 icon: <Phone className="h-8 w-8 text-pink-500" />,
