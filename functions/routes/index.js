@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const productsRouter = require("./products");
+const featuredProductsRouter = require("./featuredProducts");
 const ordersRouter = require("./orders");
 const usersRouter = require("./users");
 const testimonialsRouter = require("./testimonials");
@@ -20,6 +21,7 @@ router.use(cors({
 
 // Route modules
 router.use("/products", productsRouter);
+router.use("/featured-products", featuredProductsRouter);
 router.use("/orders", ordersRouter);
 router.use("/users", usersRouter);
 router.use("/testimonials", testimonialsRouter);

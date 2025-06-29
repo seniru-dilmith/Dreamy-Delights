@@ -2,7 +2,7 @@
 // No Next.js backend - only Firebase Cloud Functions
 
 // Base URL for Firebase Functions API
-const API_BASE_URL = 'https://us-central1-dreamy-delights-882ff.cloudfunctions.net/api';
+const API_BASE_URL = 'https://api-cvfhs7orea-uc.a.run.app/api';
 
 // Legacy Direct Function URLs (for backward compatibility)
 const FUNCTION_URLS = {
@@ -80,22 +80,39 @@ const callFunction = async (functionName: string, data?: any) => {
 
 export const fetchFeaturedProducts = async () => {
   try {
-    // Try new unified API first, fallback to legacy endpoint
-    let response;
-    try {
-      response = await fetch(`${API_BASE_URL}/products/featured`);
-    } catch (error) {
-      console.warn('New API unavailable, using legacy endpoint');
-      response = await fetch(FUNCTION_URLS.getFeaturedProducts);
-    }
+    // Use the new dedicated featured products endpoint
+    const response = await fetch(`${API_BASE_URL}/featured-products`);
     
     if (!response.ok) {
-      throw new Error('Failed to fetch featured products');
+      throw new Error(`HTTP ${response.status}: Failed to fetch featured products`);
     }
-    return await response.json();
+    
+    const data = await response.json();
+    
+    // Ensure consistent response format
+    if (data.success && Array.isArray(data.data)) {
+      return {
+        success: true,
+        data: data.data,
+        count: data.count || data.data.length,
+        message: data.message || `Found ${data.data.length} featured products`
+      };
+    } else {
+      return {
+        success: false,
+        data: [],
+        count: 0,
+        error: data.error || 'No featured products found'
+      };
+    }
   } catch (error) {
     console.error('Error fetching featured products:', error);
-    throw error;
+    return {
+      success: false,
+      data: [],
+      count: 0,
+      error: 'Failed to fetch featured products'
+    };
   }
 };
 
