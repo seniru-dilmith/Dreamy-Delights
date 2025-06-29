@@ -10,38 +10,38 @@ import { Label } from "@/components/ui/label"
 
 export default function ContactPage() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-x-hidden">
       {/* Hero Section */}
-      <section className="relative h-96 flex items-center justify-center bg-gradient-to-br from-pink-50 to-purple-50 overflow-hidden">
+      <section className="relative h-64 md:h-96 flex items-center justify-center bg-gradient-to-br from-pink-50 to-purple-50 overflow-hidden">
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="relative z-10 text-center text-gray-900 px-4"
+          className="relative z-10 text-center text-gray-900 px-4 max-w-full"
         >
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
+          <h1 className="text-3xl md:text-6xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent break-words">
             Contact Us
           </h1>
-          <p className="text-xl text-gray-700 max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-gray-700 max-w-2xl mx-auto leading-relaxed">
             We'd love to hear from you! Get in touch with any questions or to place a custom order.
           </p>
         </motion.div>
       </section>
 
       {/* Contact Info Cards */}
-      <section className="py-20 px-4 bg-white">
-        <div className="max-w-7xl mx-auto">
+      <section className="py-12 md:py-20 px-4 bg-white overflow-hidden">
+        <div className="max-w-7xl mx-auto w-full">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-16"
+            className="text-center mb-12 md:mb-16"
           >
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Get In Touch</h2>
-            <p className="text-xl text-gray-600">We're here to help make your sweet dreams come true</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Get In Touch</h2>
+            <p className="text-lg md:text-xl text-gray-600">We're here to help make your sweet dreams come true</p>
           </motion.div>
 
-          <div className="grid md:grid-cols-4 gap-8 mb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 mb-12 md:mb-16">
             {[
               {
                 icon: <MapPin className="h-8 w-8 text-pink-500" />,
@@ -75,13 +75,13 @@ export default function ContactPage() {
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 whileHover={{ y: -5 }}
               >
-                <Card className="p-6 text-center hover:shadow-xl transition-shadow duration-300">
-                  <div className="flex justify-center mb-4">
+                <Card className="p-4 md:p-6 text-center hover:shadow-xl transition-shadow duration-300 h-full w-full">
+                  <div className="flex justify-center mb-3 md:mb-4">
                     {item.icon}
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{item.title}</h3>
-                  <p className="text-gray-700 font-medium mb-1">{item.details}</p>
-                  <p className="text-gray-500 text-sm">{item.subtitle}</p>
+                  <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-2 break-words">{item.title}</h3>
+                  <p className="text-gray-700 font-medium mb-1 text-sm md:text-base break-words">{item.details}</p>
+                  <p className="text-gray-500 text-xs md:text-sm break-words">{item.subtitle}</p>
                 </Card>
               </motion.div>
             ))}
@@ -90,19 +90,19 @@ export default function ContactPage() {
       </section>
 
       {/* Contact Form & Map */}
-      <section className="py-20 px-4 bg-gradient-to-r from-pink-50 to-purple-50">
+      <section className="py-12 md:py-20 px-4 bg-gradient-to-r from-pink-50 to-purple-50">
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-16">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-16">
             {/* Contact Form */}
             <motion.div
               initial={{ opacity: 0, x: -50 }}
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
             >
-              <Card className="p-8">
-                <h3 className="text-3xl font-bold text-gray-900 mb-6">Send Us a Message</h3>
-                <form className="space-y-6">
-                  <div className="grid md:grid-cols-2 gap-4">
+              <Card className="p-6 md:p-8">
+                <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 md:mb-6">Send Us a Message</h3>
+                <form className="space-y-4 md:space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="firstName" className="text-gray-700">First Name</Label>
                       <Input
@@ -170,9 +170,9 @@ export default function ContactPage() {
                   <Button 
                     type="submit" 
                     size="lg" 
-                    className="w-full bg-pink-500 hover:bg-pink-600"
+                    className="w-full bg-pink-500 hover:bg-pink-600 h-12"
                   >
-                    <Send className="mr-2 h-5 w-5" />
+                    <Send className="mr-2 h-4 w-4 md:h-5 md:w-5" />
                     Send Message
                   </Button>
                 </form>
@@ -184,38 +184,38 @@ export default function ContactPage() {
               initial={{ opacity: 0, x: 50 }}
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
-              className="space-y-8"
+              className="space-y-6 md:space-y-8"
             >
               {/* Map Placeholder */}
-              <Card className="p-6">
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">Find Us</h3>
-                <div className="bg-gray-200 h-64 rounded-lg flex items-center justify-center mb-4">
+              <Card className="p-4 md:p-6">
+                <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3 md:mb-4">Find Us</h3>
+                <div className="bg-gray-200 h-48 md:h-64 rounded-lg flex items-center justify-center mb-3 md:mb-4">
                   <div className="text-center text-gray-600">
-                    <MapPin className="h-12 w-12 mx-auto mb-2" />
-                    <p>Interactive Map</p>
-                    <p className="text-sm">Horana, Sri Lanka</p>
+                    <MapPin className="h-8 w-8 md:h-12 md:w-12 mx-auto mb-2" />
+                    <p className="text-sm md:text-base">Interactive Map</p>
+                    <p className="text-xs md:text-sm">Horana, Sri Lanka</p>
                   </div>
                 </div>
-                <p className="text-gray-600">
+                <p className="text-gray-600 text-sm md:text-base">
                   Located in the heart of Horana, our bakery is easily accessible and surrounded by ample parking.
                 </p>
               </Card>
 
               {/* FAQ */}
-              <Card className="p-6">
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h3>
-                <div className="space-y-4">
+              <Card className="p-4 md:p-6">
+                <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3 md:mb-4">Frequently Asked Questions</h3>
+                <div className="space-y-3 md:space-y-4">
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">How far in advance should I order?</h4>
-                    <p className="text-gray-600 text-sm">We recommend ordering custom cakes at least 48 hours in advance. For special occasions, 1 week notice is preferred.</p>
+                    <h4 className="font-semibold text-gray-900 mb-1 text-sm md:text-base">How far in advance should I order?</h4>
+                    <p className="text-gray-600 text-xs md:text-sm">We recommend ordering custom cakes at least 48 hours in advance. For special occasions, 1 week notice is preferred.</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">Do you deliver?</h4>
-                    <p className="text-gray-600 text-sm">Yes! We offer delivery within a 10km radius of our bakery. Delivery fees may apply.</p>
+                    <h4 className="font-semibold text-gray-900 mb-1 text-sm md:text-base">Do you deliver?</h4>
+                    <p className="text-gray-600 text-xs md:text-sm">Yes! We offer delivery within a 10km radius of our bakery. Delivery fees may apply.</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">Can I customize my order?</h4>
-                    <p className="text-gray-600 text-sm">Absolutely! We love creating custom designs, flavors, and decorations to make your treats perfect for any occasion.</p>
+                    <h4 className="font-semibold text-gray-900 mb-1 text-sm md:text-base">Can I customize my order?</h4>
+                    <p className="text-gray-600 text-xs md:text-sm">Absolutely! We love creating custom designs, flavors, and decorations to make your treats perfect for any occasion.</p>
                   </div>
                 </div>
               </Card>
@@ -225,19 +225,19 @@ export default function ContactPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 bg-gradient-to-r from-pink-500 to-purple-600 text-white">
+      <section className="py-12 md:py-20 px-4 bg-gradient-to-r from-pink-500 to-purple-600 text-white">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <h2 className="text-4xl font-bold mb-6">Ready to Order Something Sweet?</h2>
-            <p className="text-xl mb-8">
+            <h2 className="text-2xl md:text-4xl font-bold mb-4 md:mb-6">Ready to Order Something Sweet?</h2>
+            <p className="text-lg md:text-xl mb-6 md:mb-8">
               Don't wait! Browse our delicious menu and place your order today.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild size="lg" variant="secondary">
+              <Button asChild size="lg" variant="secondary" className="h-12">
                 <a href="/menu">
                   Browse Our Menu
                 </a>
@@ -246,7 +246,7 @@ export default function ContactPage() {
                 asChild
                 size="lg"
                 variant="outline"
-                className="border-white hover:bg-white text-purple-600"
+                className="border-white hover:bg-white text-purple-600 h-12"
               >
                 <a href="tel:0788309127">Call Now</a>
               </Button>
