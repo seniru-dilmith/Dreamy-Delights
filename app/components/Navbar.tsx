@@ -17,8 +17,8 @@ export default function Navbar() {
     { name: "Home", href: "/" },
     { name: "Menu", href: "/menu" },
     { name: "About", href: "/about" },
-    { name: "Gallery", href: "/gallery" },
-    { name: "Blog", href: "/blog" },
+    // { name: "Gallery", href: "/gallery" },
+    // { name: "Blog", href: "/blog" },
     { name: "Contact", href: "/contact" },
   ]
 
@@ -30,12 +30,11 @@ export default function Navbar() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center">
-            <motion.div
-              whileHover={{ scale: 1.05 }}
+            <div
               className="text-2xl font-bold bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent"
             >
               Dreamy Delights
-            </motion.div>
+            </div>
           </Link>
 
           {/* Desktop Navigation */}
@@ -54,13 +53,13 @@ export default function Navbar() {
           {/* Right side icons */}
           <div className="flex items-center space-x-4">
             {/* Wishlist */}
-            <motion.button
+            {/* <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               className="p-2 text-gray-700 hover:text-pink-600 transition-colors"
             >
               <Heart className="h-5 w-5" />
-            </motion.button>
+            </motion.button> */}
 
             {/* Cart */}
             <Link href="/cart">
@@ -82,7 +81,7 @@ export default function Navbar() {
             {user ? (
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-700">Hi, {user.name}</span>
-                <Button variant="outline" size="sm" onClick={logout}>
+                <Button variant="outline" size="sm" onClick={() => logout()}>
                   Logout
                 </Button>
               </div>

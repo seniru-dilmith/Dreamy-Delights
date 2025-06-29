@@ -1,49 +1,78 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
-import { getAuth } from "firebase/auth";
-import { getFunctions } from "firebase/functions";
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { getAuth, signInWithCustomToken, signOut, onAuthStateChanged } from "firebase/auth";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// Firebase configuration from environment variables
+// These values come from .env.local and are safe to expose to the frontend
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "",
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "dreamy-delights-882ff",
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "",
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "",
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "",
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || ""
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || process.env.FIREBASE_AUTH_DOMAIN,
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || process.env.FIREBASE_APP_ID,
 };
 
-// Initialize Firebase services or set to null based on configuration
+// Validate that we have the required configuration
+const isValidConfig = firebaseConfig.projectId && 
+                     firebaseConfig.authDomain && 
+                     firebaseConfig.apiKey && 
+                     firebaseConfig.appId &&
+                     !firebaseConfig.apiKey.includes('your_') &&
+                     !firebaseConfig.appId.includes('your_');
+
+// Initialize Firebase services
 let app: any = null;
 let analytics: any = null;
-let db: any = null;
-let storage: any = null;
-let auth: any = null;
 let functions: any = null;
+let auth: any = null;
+let isFirebaseInitialized = false;
 
-// Validate required configuration
-if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
-  console.warn("Firebase configuration incomplete: Some environment variables are missing. Firebase services will not be available.");
-} else {
-  // Initialize Firebase only when configuration is complete
-  app = initializeApp(firebaseConfig);
-  // Only initialize analytics on client-side and if measurementId is provided
-  if (typeof window !== 'undefined' && firebaseConfig.measurementId) {
-    analytics = getAnalytics(app);
+if (isValidConfig) {
+  try {
+    // Initialize Firebase with config from environment variables
+    app = initializeApp(firebaseConfig);
+
+    // Only initialize analytics on client-side
+    if (typeof window !== 'undefined') {
+      analytics = getAnalytics(app);
+    }
+
+    functions = getFunctions(app);
+    auth = getAuth(app);
+    isFirebaseInitialized = true;
+    console.info('Firebase initialized successfully with environment variables');
+  } catch (error) {
+    console.error('Firebase initialization failed:', error);
+    // Set to null if initialization fails
+    app = null;
+    analytics = null;
+    functions = null;
+    auth = null;
+    isFirebaseInitialized = false;
   }
-  db = getFirestore(app);
-  storage = getStorage(app);
-  auth = getAuth(app);
-  functions = getFunctions(app);
+} else {
+  console.warn('Firebase not initialized: Missing or invalid configuration in environment variables');
+  console.warn('Please check your .env.local file and ensure all NEXT_PUBLIC_FIREBASE_* variables are set');
 }
 
-// Export the services for use in other parts of your application
-export { app, analytics, db, storage, auth, functions };
+// Auth function wrappers - all authentication goes through Firebase Functions
+export const authFunctions = {
+  loginWithEmail: functions ? httpsCallable(functions, 'loginWithEmail') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
+  loginWithGoogle: functions ? httpsCallable(functions, 'loginWithGoogle') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
+  loginWithFacebook: functions ? httpsCallable(functions, 'loginWithFacebook') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
+  registerWithEmail: functions ? httpsCallable(functions, 'registerWithEmail') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
+  logout: functions ? httpsCallable(functions, 'logout') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
+  getCurrentUser: functions ? httpsCallable(functions, 'getCurrentUser') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
+  refreshToken: functions ? httpsCallable(functions, 'refreshToken') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
+  setUserRole: functions ? httpsCallable(functions, 'setUserRole') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
+};
+
+// Helper function to check if Firebase is properly initialized
+export const isFirebaseReady = () => isFirebaseInitialized;
+
+// Export Firebase client auth for token management
+export { app, analytics, functions, auth, signInWithCustomToken, signOut, onAuthStateChanged };
