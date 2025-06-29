@@ -32,20 +32,6 @@ class ProductService {
   }
 
   /**
-   * Get featured products
-   * @return {Promise<Object>} Featured products data
-   */
-  async getFeaturedProducts() {
-    const products = await this.productModel.getFeatured();
-
-    return {
-      success: true,
-      data: products,
-      count: products.length,
-    };
-  }
-
-  /**
    * Create a new product
    * @param {Object} productData - Product data
    * @return {Promise<Object>} Creation result
