@@ -1,0 +1,38 @@
+[
+  {
+    "name": "Sarah Johnson",
+    "text": "Absolutely delicious! The strawberry shortcake was divine and arrived perfectly fresh. The packaging was beautiful too. Will definitely order again!",
+    "rating": 5,
+    "featured": true
+  },
+  {
+    "name": "Michael Chen",
+    "text": "Best bakery delivery service I've ever used. The chocolate croissants were still warm when they arrived, and the customer service was exceptional.",
+    "rating": 5,
+    "featured": true
+  },
+  {
+    "name": "Emma Rodriguez",
+    "text": "The lemon tart was exactly what I was craving. Perfect balance of sweet and tangy. Fast delivery and excellent quality.",
+    "rating": 4,
+    "featured": true
+  },
+  {
+    "name": "David Thompson",
+    "text": "Ordered for my daughter's birthday party and everyone was impressed. The custom cake decorations were beautiful and tasted amazing.",
+    "rating": 5,
+    "featured": false
+  },
+  {
+    "name": "Lisa Park",
+    "text": "Great selection of pastries and very reasonable prices. The blueberry muffins are my new favorite breakfast!",
+    "rating": 4,
+    "featured": false
+  },
+  {
+    "name": "James Wilson",
+    "text": "Professional service and incredible taste. Used them for our office catering and received nothing but compliments.",
+    "rating": 5,
+    "featured": false
+  }
+]

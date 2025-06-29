@@ -364,50 +364,148 @@ export const updateOrderStatus = async (orderId: string, status: string) => {
   }
 };
 
-export const fetchTestimonials = async (params: {
-  limit?: number;
-} = {}) => {
+// ==========================================
+// TESTIMONIALS API
+// ==========================================
+
+export const fetchTestimonials = async () => {
   try {
-    const queryParams = new URLSearchParams();
-    if (params.limit) queryParams.append('limit', params.limit.toString());
-
-    const url = `${API_BASE_URL}/testimonials${
-      queryParams.toString() ? `?${queryParams.toString()}` : ''
-    }`;
-
-    const response = await fetch(url);
+    const response = await fetch(`${API_BASE_URL}/testimonials`);
+    
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: Failed to fetch testimonials`);
+      throw new Error(`Testimonials fetch failed: ${response.statusText}`);
     }
+
     return await response.json();
   } catch (error) {
     console.error('Error fetching testimonials:', error);
-    
-    // Return empty result structure instead of throwing
-    return {
-      success: false,
-      data: [],
-      error: error instanceof Error ? error.message : 'Unknown error occurred'
-    };
+    throw error;
   }
 };
 
-export const fetchFeaturedTestimonials = async () => {
+export const fetchFeaturedTestimonials = async (limit = 3) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/testimonials/featured`);
+    const response = await fetch(`${API_BASE_URL}/testimonials/featured?limit=${limit}`);
+    
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: Failed to fetch featured testimonials`);
+      throw new Error(`Featured testimonials fetch failed: ${response.statusText}`);
     }
+
     return await response.json();
   } catch (error) {
     console.error('Error fetching featured testimonials:', error);
+    throw error;
+  }
+};
+
+export const createTestimonialAdmin = async (testimonialData: {
+  name: string;
+  text: string;
+  rating: number;
+  featured?: boolean;
+}) => {
+  try {
+    const token = getAdminToken();
+    const response = await fetch(`${API_BASE_URL}/testimonials`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(testimonialData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Testimonial creation failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating testimonial:', error);
+    throw error;
+  }
+};
+
+export const updateTestimonialAdmin = async (id: string, updateData: {
+  name?: string;
+  text?: string;
+  rating?: number;
+  featured?: boolean;
+}) => {
+  try {
+    const token = getAdminToken();
     
-    // Return empty result structure instead of throwing
-    return {
-      success: false,
-      data: [],
-      error: error instanceof Error ? error.message : 'Unknown error occurred'
-    };
+    if (!token) {
+      throw new Error('No admin token available. Please log in again.');
+    }
+
+    console.log('🔄 Updating testimonial:', { id, updateData, tokenPreview: token.substring(0, 20) + '...' });
+
+    const response = await fetch(`${API_BASE_URL}/testimonials/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(updateData),
+    });
+
+    console.log('📡 Update response:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok,
+      headers: Object.fromEntries(response.headers.entries())
+    });
+
+    if (!response.ok) {
+      // Get detailed error information
+      const errorText = await response.text();
+      console.error('❌ Update failed with response:', errorText);
+      
+      let errorMessage = `Testimonial update failed: ${response.status} ${response.statusText}`;
+      
+      try {
+        const errorData = JSON.parse(errorText);
+        if (errorData.message) {
+          errorMessage += ` - ${errorData.message}`;
+        }
+      } catch {
+        if (errorText) {
+          errorMessage += ` - ${errorText}`;
+        }
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log('✅ Update successful:', result);
+    return result;
+  } catch (error) {
+    console.error('Error updating testimonial:', error);
+    throw error;
+  }
+};
+
+export const deleteTestimonialAdmin = async (id: string) => {
+  try {
+    const token = getAdminToken();
+    const response = await fetch(`${API_BASE_URL}/testimonials/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Testimonial deletion failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error deleting testimonial:', error);
+    throw error;
   }
 };
 
