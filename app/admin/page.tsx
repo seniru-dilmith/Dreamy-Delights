@@ -8,39 +8,143 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "../context/AuthContext"
+import { 
+  fetchAllOrders, 
+  fetchProducts, 
+  updateOrderStatus,
+  addProduct,
+  updateProduct,
+  deleteProduct 
+} from "@/firebase/api"
 
-const mockStats = {
-  totalOrders: 156,
-  totalCustomers: 89,
-  totalProducts: 24,
-  revenue: 12450,
+// Type definitions
+interface Order {
+  id: string;
+  customer?: string;
+  userId?: string;
+  items: any[];
+  totalAmount: number;
+  status: string;
+  createdAt?: any;
 }
 
-const mockOrders = [
-  { id: "001", customer: "Sarah Johnson", items: 3, total: 45.99, status: "pending" },
-  { id: "002", customer: "Mike Chen", items: 1, total: 25.99, status: "completed" },
-  { id: "003", customer: "Emily Davis", items: 2, total: 35.5, status: "processing" },
-]
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  stock?: number;
+  category: string;
+  description?: string;
+  image?: string;
+}
 
-const mockProducts = [
-  { id: "1", name: "Chocolate Cupcake", price: 4.99, stock: 24, category: "Cupcakes" },
-  { id: "2", name: "Vanilla Cake", price: 45.99, stock: 5, category: "Cakes" },
-  { id: "3", name: "Red Velvet", price: 5.99, stock: 18, category: "Cupcakes" },
-]
+interface Stats {
+  totalOrders: number;
+  totalCustomers: number;
+  totalProducts: number;
+  revenue: number;
+}
 
 export default function AdminPage() {
   const { user } = useAuth()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("dashboard")
+  const [orders, setOrders] = useState<Order[]>([])
+  const [products, setProducts] = useState<Product[]>([])
+  const [stats, setStats] = useState<Stats>({
+    totalOrders: 0,
+    totalCustomers: 0,
+    totalProducts: 0,
+    revenue: 0
+  })
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!user || user.role !== "admin") {
       router.push("/auth/login")
+      return
     }
+    
+    loadAdminData()
   }, [user, router])
 
+  const loadAdminData = async () => {
+    try {
+      setLoading(true)
+      
+      // Load orders
+      const ordersResponse = await fetchAllOrders()
+      if (ordersResponse.success) {
+        setOrders(ordersResponse.data)
+      }
+      
+      // Load products  
+      const productsResponse = await fetchProducts({ limit: 100 })
+      if (productsResponse.success) {
+        setProducts(productsResponse.data)
+      }
+      
+      // Calculate stats
+      const totalOrders = ordersResponse.success ? ordersResponse.data.length : 0
+      const revenue = ordersResponse.success 
+        ? ordersResponse.data.reduce((sum: number, order: Order) => sum + order.totalAmount, 0)
+        : 0
+      const totalProducts = productsResponse.success ? productsResponse.data.length : 0
+      
+      setStats({
+        totalOrders,
+        totalCustomers: totalOrders, // Simplified - in real app you'd count unique users
+        totalProducts,
+        revenue
+      })
+      
+    } catch (error) {
+      console.error("Error loading admin data:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
+    try {
+      await updateOrderStatus(orderId, newStatus)
+      // Refresh orders
+      loadAdminData()
+    } catch (error) {
+      console.error("Error updating order status:", error)
+    }
+  }
+
+  const handleDeleteProduct = async (productId: string) => {
+    try {
+      await deleteProduct(productId)
+      // Refresh products
+      loadAdminData()
+    } catch (error) {
+      console.error("Error deleting product:", error)
+    }
+  }
+
   if (!user || user.role !== "admin") {
-    return <div>Access denied</div>
+    return (
+      <div className="min-h-screen pt-20 pb-16 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
+          <p className="text-gray-600">You need admin privileges to access this page.</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen pt-20 pb-16 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading admin dashboard...</p>
+        </div>
+      </div>
+    )
   }
 
   const getStatusColor = (status: string) => {
@@ -94,7 +198,7 @@ export default function AdminPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm text-gray-600">Total Orders</p>
-                        <p className="text-3xl font-bold">{mockStats.totalOrders}</p>
+                        <p className="text-3xl font-bold">{stats.totalOrders}</p>
                       </div>
                       <ShoppingCart className="h-8 w-8 text-pink-500" />
                     </div>
@@ -112,7 +216,7 @@ export default function AdminPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm text-gray-600">Customers</p>
-                        <p className="text-3xl font-bold">{mockStats.totalCustomers}</p>
+                        <p className="text-3xl font-bold">{stats.totalCustomers}</p>
                       </div>
                       <Users className="h-8 w-8 text-blue-500" />
                     </div>
@@ -130,7 +234,7 @@ export default function AdminPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm text-gray-600">Products</p>
-                        <p className="text-3xl font-bold">{mockStats.totalProducts}</p>
+                        <p className="text-3xl font-bold">{stats.totalProducts}</p>
                       </div>
                       <Package className="h-8 w-8 text-green-500" />
                     </div>
@@ -148,7 +252,7 @@ export default function AdminPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm text-gray-600">Revenue</p>
-                        <p className="text-3xl font-bold">${mockStats.revenue}</p>
+                        <p className="text-3xl font-bold">${stats.revenue}</p>
                       </div>
                       <TrendingUp className="h-8 w-8 text-purple-500" />
                     </div>
@@ -164,14 +268,14 @@ export default function AdminPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {mockOrders.map((order) => (
+                  {orders.slice(0, 5).map((order: Order) => (
                     <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div>
                         <p className="font-semibold">Order #{order.id}</p>
-                        <p className="text-sm text-gray-600">{order.customer}</p>
+                        <p className="text-sm text-gray-600">{order.customer || `User ${order.userId}`}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold">${order.total}</p>
+                        <p className="font-semibold">${order.totalAmount}</p>
                         <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
                       </div>
                     </div>
@@ -190,21 +294,28 @@ export default function AdminPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {mockOrders.map((order) => (
+                {orders.map((order: Order) => (
                   <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div>
                       <p className="font-semibold">Order #{order.id}</p>
                       <p className="text-sm text-gray-600">
-                        {order.customer} • {order.items} items
+                        {order.customer || `User ${order.userId}`} • {order.items.length} items
                       </p>
                     </div>
                     <div className="flex items-center space-x-4">
-                      <p className="font-semibold">${order.total}</p>
+                      <p className="font-semibold">${order.totalAmount}</p>
                       <Badge className={getStatusColor(order.status)}>{order.status}</Badge>
-                      <Button variant="outline" size="sm">
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit
-                      </Button>
+                      <select 
+                        value={order.status}
+                        onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
+                        className="px-2 py-1 border rounded"
+                        title="Change order status"
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="processing">Processing</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
                     </div>
                   </div>
                 ))}
@@ -225,12 +336,12 @@ export default function AdminPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {mockProducts.map((product) => (
+                {products.map((product: Product) => (
                   <div key={product.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div>
                       <p className="font-semibold">{product.name}</p>
                       <p className="text-sm text-gray-600">
-                        {product.category} • Stock: {product.stock}
+                        {product.category} • Stock: {product.stock || 'N/A'}
                       </p>
                     </div>
                     <div className="flex items-center space-x-4">
@@ -239,7 +350,12 @@ export default function AdminPage() {
                         <Edit className="h-4 w-4 mr-2" />
                         Edit
                       </Button>
-                      <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-red-600 hover:text-red-700"
+                        onClick={() => handleDeleteProduct(product.id)}
+                      >
                         <Trash2 className="h-4 w-4 mr-2" />
                         Delete
                       </Button>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import Image from "next/image"
 import { Star, ShoppingCart, Heart, Filter } from "lucide-react"
@@ -8,10 +8,28 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useCart } from "../context/CartContext"
+import { fetchProducts } from "@/firebase/api"
 
 const categories = ["All", "Cupcakes", "Cakes", "Cookies", "Pastries"]
 
-const products = [
+// Product type definition
+interface Product {
+  id: string;
+  name: string;
+  category: string;
+  price: number;
+  image: string;
+  rating: number;
+  description: string;
+  customizations?: {
+    sizes: string[];
+    flavors: string[];
+    decorations: string[];
+  };
+}
+
+// Fallback products for when API is not available
+const fallbackProducts: Product[] = [
   {
     id: "1",
     name: "Chocolate Dream Cupcake",
@@ -100,13 +118,49 @@ const products = [
 
 export default function MenuPage() {
   const [selectedCategory, setSelectedCategory] = useState("All")
-  const [selectedProduct, setSelectedProduct] = useState<any>(null)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
   const { addToCart } = useCart()
 
-  const filteredProducts =
-    selectedCategory === "All" ? products : products.filter((product) => product.category === selectedCategory)
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const response = await fetchProducts({ limit: 50 }); // Get more products for menu
+        
+        if (response.success && response.data.length > 0) {
+          console.log(`Successfully loaded ${response.data.length} products from API`);
+          // Add default customizations if not present
+          const productsWithCustomizations = response.data.map((product: any) => ({
+            ...product,
+            rating: product.rating || 4.8, // Default rating if not in API
+            customizations: product.customizations || {
+              sizes: ["Regular", "Large"],
+              flavors: ["Original", "Chocolate", "Vanilla"],
+              decorations: ["Classic", "Decorated", "Custom Message"],
+            }
+          }));
+          setProducts(productsWithCustomizations);
+        } else {
+          console.log('No products found in API, using fallback data');
+          setProducts(fallbackProducts);
+        }
+      } catch (error) {
+        console.error("Error fetching products:", error);
+        console.log('Using fallback products due to error');
+        setProducts(fallbackProducts);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadProducts();
+  }, []);
 
-  const handleAddToCart = (product: any, customizations?: any) => {
+  const filteredProducts =
+    selectedCategory === "All" ? products : products.filter((product: Product) => product.category === selectedCategory)
+
+  const handleAddToCart = (product: Product, customizations?: any) => {
     addToCart({
       id: product.id,
       name: product.name,
@@ -116,6 +170,17 @@ export default function MenuPage() {
       customizations,
     })
     setSelectedProduct(null)
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen pt-20 pb-16 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading delicious products...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -227,7 +292,7 @@ export default function MenuPage() {
                 <div>
                   <label htmlFor="size-select" className="block text-sm font-medium mb-2">Size</label>
                   <select id="size-select" className="w-full p-2 border rounded-md">
-                    {selectedProduct.customizations.sizes.map((size: string) => (
+                    {selectedProduct.customizations?.sizes?.map((size: string) => (
                       <option key={size} value={size}>
                         {size}
                       </option>
@@ -238,7 +303,7 @@ export default function MenuPage() {
                 <div>
                   <label htmlFor="flavor-select" className="block text-sm font-medium mb-2">Flavor</label>
                   <select id="flavor-select" className="w-full p-2 border rounded-md">
-                    {selectedProduct.customizations.flavors.map((flavor: string) => (
+                    {selectedProduct.customizations?.flavors?.map((flavor: string) => (
                       <option key={flavor} value={flavor}>
                         {flavor}
                       </option>
@@ -249,7 +314,7 @@ export default function MenuPage() {
                 <div>
                   <label htmlFor="decoration-select" className="block text-sm font-medium mb-2">Decoration</label>
                   <select id="decoration-select" className="w-full p-2 border rounded-md">
-                    {selectedProduct.customizations.decorations.map((decoration: string) => (
+                    {selectedProduct.customizations?.decorations?.map((decoration: string) => (
                       <option key={decoration} value={decoration}>
                         {decoration}
                       </option>

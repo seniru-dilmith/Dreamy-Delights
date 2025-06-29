@@ -1,33 +1,78 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
-import { getAuth } from "firebase/auth";
-import { getFunctions } from "firebase/functions";
+import { getFunctions, httpsCallable } from "firebase/functions";
+import { getAuth, signInWithCustomToken, signOut, onAuthStateChanged } from "firebase/auth";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// Firebase configuration from environment variables
+// These values come from .env.local and are safe to expose to the frontend
 const firebaseConfig = {
-  apiKey: process.env.FIREBASE_APIKEY,
-  authDomain: process.env.FIREBASE_AUTHDOMAI,
-  projectId: process.env.FIREBASE_PROJECTID,
-  storageBucket: process.env.FIREBASE_STORAGEBUCKET,
-  messagingSenderId: process.env.FIREBASE_MESSAGINGSENDERID,
-  appId: process.env.FIREBASE_APPID,
-  measurementId: process.env.FIREBASE_MEASUREMENTID
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || process.env.FIREBASE_PROJECT_ID,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || process.env.FIREBASE_AUTH_DOMAIN,
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || process.env.FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-const db = getFirestore(app);
-const storage = getStorage(app);
-const auth = getAuth(app);
-const functions = getFunctions(app);
+// Validate that we have the required configuration
+const isValidConfig = firebaseConfig.projectId && 
+                     firebaseConfig.authDomain && 
+                     firebaseConfig.apiKey && 
+                     firebaseConfig.appId &&
+                     !firebaseConfig.apiKey.includes('your_') &&
+                     !firebaseConfig.appId.includes('your_');
 
-// Export the initialized services for use in other parts of your application
-export { app, analytics, db, storage, auth, functions };
+// Initialize Firebase services
+let app: any = null;
+let analytics: any = null;
+let functions: any = null;
+let auth: any = null;
+let isFirebaseInitialized = false;
+
+if (isValidConfig) {
+  try {
+    // Initialize Firebase with config from environment variables
+    app = initializeApp(firebaseConfig);
+
+    // Only initialize analytics on client-side
+    if (typeof window !== 'undefined') {
+      analytics = getAnalytics(app);
+    }
+
+    functions = getFunctions(app);
+    auth = getAuth(app);
+    isFirebaseInitialized = true;
+    console.info('Firebase initialized successfully with environment variables');
+  } catch (error) {
+    console.error('Firebase initialization failed:', error);
+    // Set to null if initialization fails
+    app = null;
+    analytics = null;
+    functions = null;
+    auth = null;
+    isFirebaseInitialized = false;
+  }
+} else {
+  console.warn('Firebase not initialized: Missing or invalid configuration in environment variables');
+  console.warn('Please check your .env.local file and ensure all NEXT_PUBLIC_FIREBASE_* variables are set');
+}
+
+// Auth function wrappers - all authentication goes through Firebase Functions
+export const authFunctions = {
+  loginWithEmail: functions ? httpsCallable(functions, 'loginWithEmail') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
+  loginWithGoogle: functions ? httpsCallable(functions, 'loginWithGoogle') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
+  loginWithFacebook: functions ? httpsCallable(functions, 'loginWithFacebook') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
+  registerWithEmail: functions ? httpsCallable(functions, 'registerWithEmail') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
+  logout: functions ? httpsCallable(functions, 'logout') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
+  getCurrentUser: functions ? httpsCallable(functions, 'getCurrentUser') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
+  refreshToken: functions ? httpsCallable(functions, 'refreshToken') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
+  setUserRole: functions ? httpsCallable(functions, 'setUserRole') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
+};
+
+// Helper function to check if Firebase is properly initialized
+export const isFirebaseReady = () => isFirebaseInitialized;
+
+// Export Firebase client auth for token management
+export { app, analytics, functions, auth, signInWithCustomToken, signOut, onAuthStateChanged };
