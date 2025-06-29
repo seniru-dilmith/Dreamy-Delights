@@ -1,10 +1,10 @@
 const express = require("express");
 const cors = require("cors");
 const productsRouter = require("./products");
-const featuredProductsRouter = require("./featuredProducts");
 const ordersRouter = require("./orders");
 const usersRouter = require("./users");
 const testimonialsRouter = require("./testimonials");
+const adminRouter = require("./admin");
 
 /**
  * Main API Router - Combines all route modules with CORS
@@ -12,19 +12,20 @@ const testimonialsRouter = require("./testimonials");
 // eslint-disable-next-line new-cap
 const router = express.Router();
 
-// Enable CORS for all routes
+// Enable CORS for all routes - simplified for debugging
 router.use(cors({
-  origin: "*",
+  origin: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
 }));
 
 // Route modules
 router.use("/products", productsRouter);
-router.use("/featured-products", featuredProductsRouter);
 router.use("/orders", ordersRouter);
 router.use("/users", usersRouter);
 router.use("/testimonials", testimonialsRouter);
+router.use("/admin", adminRouter);
 
 // Health check endpoint
 router.get("/health", (req, res) => {

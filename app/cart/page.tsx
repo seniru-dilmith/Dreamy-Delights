@@ -131,20 +131,20 @@ export default function CartPage() {
                   <div className="space-y-2 mb-4">
                     <div className="flex justify-between">
                       <span>Subtotal</span>
-                      <span>${total.toFixed(2)}</span>
+                      <span>Rs. {total.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Tax</span>
-                      <span>${(total * 0.08).toFixed(2)}</span>
+                      <span>Rs. {(total * 0.08).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Delivery</span>
-                      <span>$5.00</span>
+                      <span>Rs. 5.00</span>
                     </div>
                     <div className="border-t pt-2">
                       <div className="flex justify-between font-semibold text-lg">
                         <span>Total</span>
-                        <span>${(total + total * 0.08 + 5).toFixed(2)}</span>
+                        <span>Rs. {(total + total * 0.08 + 5).toFixed(2)}</span>
                       </div>
                     </div>
                   </div>

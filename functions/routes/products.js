@@ -11,12 +11,16 @@ const productController = new ProductController();
 
 // Public routes - no authentication required
 router.get("/", (req, res) => productController.getProducts(req, res));
+router.get("/featured", (req, res) =>
+  productController.getFeaturedProducts(req, res));
 
 // Admin routes - require admin authentication
 router.post("/", requireAdminMiddleware, (req, res) =>
   productController.createProduct(req, res));
 router.put("/:id", requireAdminMiddleware, (req, res) =>
   productController.updateProduct(req, res));
+router.put("/:id/featured", requireAdminMiddleware, (req, res) =>
+  productController.toggleFeaturedStatus(req, res));
 router.delete("/:id", requireAdminMiddleware, (req, res) =>
   productController.deleteProduct(req, res));
 

@@ -1,6 +1,7 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const express = require("express");
+const cors = require("cors");
 const apiRouter = require("./routes");
 
 // Import middleware for legacy callable functions
@@ -10,13 +11,24 @@ const {requireAdminCallable} = require("./middleware/auth");
 const authFunctions = require("./auth");
 
 // Initialize Firebase Admin
-admin.initializeApp();
+admin.initializeApp({
+  storageBucket: "dreamy-delights-882ff.firebasestorage.app",
+});
 const db = admin.firestore();
 
 // Create Express app
 const app = express();
 
+// CORS configuration - simplified for debugging
+const corsOptions = {
+  origin: true, // Allow all origins for now
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+};
+
 // Middleware
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 
@@ -244,3 +256,9 @@ exports.getCurrentUser = authFunctions.getCurrentUser;
 exports.logout = authFunctions.logout;
 exports.refreshToken = authFunctions.refreshToken;
 exports.setUserRole = authFunctions.setUserRole;
+
+// Export admin auth functions
+exports.adminLogin = authFunctions.adminLogin;
+exports.adminLogout = authFunctions.adminLogout;
+exports.verifyAdminToken = authFunctions.verifyAdminToken;
+exports.createInitialAdmin = authFunctions.createInitialAdmin;
