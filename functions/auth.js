@@ -1,5 +1,7 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 /**
  * Login with email and password
@@ -397,6 +399,279 @@ exports.setUserRole = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError(
         "internal",
         "Failed to set user role",
+    );
+  }
+});
+
+// Admin authentication functions
+const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET ||
+    "fallback-secret-change-in-production";
+
+/**
+ * Admin login function
+ */
+exports.adminLogin = functions.https.onCall(async (data, context) => {
+  console.log("Firebase adminLogin function called with data:", {
+    data: data,
+    hasUsername: !!(data && data.username),
+    hasPassword: !!(data && data.password),
+    dataType: typeof data,
+    dataKeys: data ? Object.keys(data) : "no data",
+  });
+
+  // Handle the case where data is wrapped in another data object
+  let credentials = data;
+  if (data && data.data && typeof data.data === "object") {
+    console.log("Data is wrapped, extracting inner data object");
+    credentials = data.data;
+  }
+
+  const {username, password} = credentials || {};
+
+  if (!username || !password) {
+    console.log("Missing credentials:", {
+      username: !!username,
+      password: !!password,
+    });
+    throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Username and password are required",
+    );
+  }
+
+  try {
+    const db = admin.firestore();
+
+    // Get admin user from Firestore
+    const adminSnapshot = await db.collection("admins")
+        .where("username", "==", username)
+        .where("active", "==", true)
+        .limit(1)
+        .get();
+
+    if (adminSnapshot.empty) {
+      throw new functions.https.HttpsError(
+          "unauthenticated",
+          "Invalid credentials",
+      );
+    }
+
+    const adminDoc = adminSnapshot.docs[0];
+    const adminData = adminDoc.data();
+
+    // Verify password
+    const passwordMatch = await bcrypt.compare(password,
+        adminData.hashedPassword);
+    if (!passwordMatch) {
+      throw new functions.https.HttpsError(
+          "unauthenticated",
+          "Invalid credentials",
+      );
+    }
+
+    // Update last login
+    await adminDoc.ref.update({
+      lastLogin: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // Create JWT token
+    const tokenPayload = {
+      adminId: adminDoc.id,
+      username: adminData.username,
+      role: adminData.role,
+      permissions: adminData.permissions,
+    };
+
+    const token = jwt.sign(tokenPayload, ADMIN_JWT_SECRET, {
+      expiresIn: "4h",
+    });
+
+    return {
+      success: true,
+      admin: {
+        id: adminDoc.id,
+        username: adminData.username,
+        email: adminData.email,
+        role: adminData.role,
+        permissions: adminData.permissions,
+        lastLogin: new Date(),
+      },
+      token,
+    };
+  } catch (error) {
+    console.error("Admin login error:", error);
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    throw new functions.https.HttpsError(
+        "internal",
+        "Authentication failed",
+    );
+  }
+});
+
+/**
+ * Admin logout function
+ */
+exports.adminLogout = functions.https.onCall(async (data, context) => {
+  // For JWT tokens, logout is handled client-side by removing the token
+  // You could implement a token blacklist here if needed
+  return {
+    success: true,
+    message: "Logged out successfully",
+  };
+});
+
+/**
+ * Verify admin token
+ */
+exports.verifyAdminToken = functions.https.onCall(async (data, context) => {
+  console.log("verifyAdminToken called with data:", {
+    data: data,
+    dataType: typeof data,
+    dataKeys: data ? Object.keys(data) : "no data",
+  });
+
+  // Handle the case where data is wrapped in another data object
+  let tokenData = data;
+  if (data && data.data && typeof data.data === "object") {
+    console.log("Token data is wrapped, extracting inner data object");
+    tokenData = data.data;
+  }
+
+  const {token} = tokenData || {};
+
+  if (!token) {
+    console.log("Missing token:", {hasToken: !!token});
+    throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Token is required",
+    );
+  }
+
+  try {
+    const decoded = jwt.verify(token, ADMIN_JWT_SECRET);
+    const db = admin.firestore();
+
+    // Verify admin still exists and is active
+    const adminDoc = await db.collection("admins").doc(decoded.adminId).get();
+
+    if (!adminDoc.exists || !adminDoc.data().active) {
+      throw new functions.https.HttpsError(
+          "unauthenticated",
+          "Invalid or inactive admin account",
+      );
+    }
+
+    const adminData = adminDoc.data();
+
+    return {
+      valid: true,
+      admin: {
+        id: adminDoc.id,
+        username: adminData.username,
+        email: adminData.email,
+        role: adminData.role,
+        permissions: adminData.permissions,
+        lastLogin: adminData.lastLogin,
+      },
+    };
+  } catch (error) {
+    console.error("Token verification error:", error);
+    return {
+      valid: false,
+      message: "Invalid token",
+    };
+  }
+});
+
+/**
+ * Create initial admin user (can only be called once during setup)
+ */
+exports.createInitialAdmin = functions.https.onCall(async (data, context) => {
+  const {username, email, password, setupKey} = data;
+
+  console.log("Received data:", {
+    username,
+    email,
+    password: password ? "[REDACTED]" : "undefined",
+    setupKey,
+  });
+
+  // Validate required fields
+  if (!username || !email || !password || !setupKey) {
+    console.error("Missing required fields:", {
+      username: !!username,
+      email: !!email,
+      password: !!password,
+      setupKey: !!setupKey,
+    });
+    throw new functions.https.HttpsError(
+        "invalid-argument",
+        "Username, email, password, and setup key are required",
+    );
+  }
+
+  // This should only be callable during initial setup
+  // In production, you'd want a secure setup key
+  if (setupKey !== process.env.ADMIN_SETUP_KEY) {
+    console.error("Invalid setup key provided");
+    throw new functions.https.HttpsError(
+        "permission-denied",
+        "Invalid setup key",
+    );
+  }
+
+  try {
+    const db = admin.firestore();
+
+    // Check if any admin already exists
+    const existingAdmins = await db.collection("admins").limit(1).get();
+    if (!existingAdmins.empty) {
+      throw new functions.https.HttpsError(
+          "already-exists",
+          "Admin users already exist",
+      );
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    // Create admin user
+    const adminData = {
+      username,
+      email,
+      hashedPassword,
+      role: "super_admin",
+      permissions: [
+        "manage_products",
+        "manage_orders",
+        "manage_users",
+        "manage_content",
+        "manage_settings",
+        "view_analytics",
+        "manage_admins",
+      ],
+      active: true,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      lastLogin: null,
+    };
+
+    const adminDoc = await db.collection("admins").add(adminData);
+
+    return {
+      success: true,
+      adminId: adminDoc.id,
+      message: "Initial admin user created successfully",
+    };
+  } catch (error) {
+    console.error("Create initial admin error:", error);
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    throw new functions.https.HttpsError(
+        "internal",
+        "Failed to create admin user",
     );
   }
 });

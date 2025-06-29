@@ -8,28 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { fetchFeaturedProducts, fetchFeaturedTestimonials } from "@/firebase/api"
 import { useEffect, useState } from "react"
-
-// Product type definition
-interface Product {
-  id: string | number;
-  name: string;
-  price: number;
-  image: string;
-  rating: number;
-  description: string;
-  category?: string;
-  featured?: boolean;
-}
-
-// Testimonial type definition
-interface Testimonial {
-  id: string;
-  name: string;
-  text: string;
-  rating: number;
-  featured?: boolean;
-  createdAt?: any;
-}
+import { Product, Testimonial, getProductImageUrl, formatPrice } from "@/types/product"
 
 export default function HomePage() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
@@ -262,7 +241,7 @@ export default function HomePage() {
                   <Card className="overflow-hidden hover:shadow-xl transition-shadow duration-300 h-full">
                     <div className="relative">
                       <Image
-                        src={product.image || "/logo-large.png"}
+                        src={getProductImageUrl(product)}
                         alt={product.name}
                         width={300}
                         height={300}
@@ -286,7 +265,7 @@ export default function HomePage() {
                       </div>
                       <p className="text-gray-600 mb-4 text-sm">{product.description}</p>
                       <div className="flex items-center justify-between flex-wrap gap-2">
-                        <span className="text-xl font-bold text-pink-600">${product.price}</span>
+                        <span className="text-xl font-bold text-pink-600">Rs. {product.price}</span>
                         <Button className="bg-pink-500 hover:bg-pink-600 text-sm">
                           <ShoppingCart className="mr-2 h-4 w-4" />
                           Add to Cart
@@ -324,16 +303,16 @@ export default function HomePage() {
               </p>
               <div className="flex items-center justify-between sm:justify-start sm:space-x-8 mb-6">
                 <div className="text-center">
-                  <div className="text-2xl md:text-3xl font-bold text-pink-600">15+</div>
-                  <div className="text-xs md:text-sm text-gray-600">Years Experience</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl md:text-3xl font-bold text-pink-600">10k+</div>
-                  <div className="text-xs md:text-sm text-gray-600">Happy Customers</div>
+                  <div className="text-2xl md:text-3xl font-bold text-pink-600">100%</div>
+                  <div className="text-xs md:text-sm text-gray-600">Fresh Daily</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl md:text-3xl font-bold text-pink-600">50+</div>
-                  <div className="text-xs md:text-sm text-gray-600">Unique Flavors</div>
+                  <div className="text-xs md:text-sm text-gray-600">Orders Delivered</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl md:text-3xl font-bold text-pink-600">24/7</div>
+                  <div className="text-xs md:text-sm text-gray-600">Online Orders</div>
                 </div>
               </div>
               <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
@@ -357,8 +336,8 @@ export default function HomePage() {
                 <div className="flex items-center">
                   <Award className="h-6 w-6 md:h-8 md:w-8 text-yellow-500 mr-2 md:mr-3 flex-shrink-0" />
                   <div>
-                    <div className="font-semibold text-sm md:text-base">Award Winning</div>
-                    <div className="text-xs md:text-sm text-gray-600">Best Bakery 2023</div>
+                    <div className="font-semibold text-sm md:text-base">Delightful Treats</div>
+                    <div className="text-xs md:text-sm text-gray-600">Baked Fresh Daily</div>
                   </div>
                 </div>
               </div>
