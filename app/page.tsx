@@ -82,46 +82,141 @@ export default function HomePage() {
   return (
     <div className="min-h-screen overflow-x-hidden">
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-purple-50 overflow-hidden">
-        {/* Background Image */}
-        <div className="absolute inset-0">
-          <Image
-            src="/logo-large.png"
-            alt="Dreamy Delights Background"
-            width={800}
-            height={300}
-            className="object-cover object-center mx-auto"
-            style={{ width: "auto", height: "auto" }}
-            priority
-          />
-        </div>
-        <div className="absolute inset-0 bg-black/40" />
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="relative z-10 text-center text-white px-4 sm:px-8 md:px-16 lg:px-24 xl:px-32 w-full max-w-7xl mx-auto"
-        >
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-8 sm:mb-12 md:mb-16 lg:mb-20 xl:mb-24 bg-gradient-to-r from-pink-300 to-purple-50 bg-clip-text text-transparent drop-shadow-lg leading-tight">
-              Every Bite is a Sweet Dream Come True
-            </h1>
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center max-w-md sm:max-w-lg mx-auto">
-            <Button asChild size="lg" className="bg-pink-500 hover:bg-pink-600 text-base sm:text-lg shadow-lg">
-              <Link href="/menu">
-                <ShoppingCart className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-                Order Now
-              </Link>
-            </Button>
-            <Button
-              asChild
-              variant="outline"
-              size="lg"
-              className="border-white bg-white hover:bg-slate-200 text-gray-900 text-base sm:text-lg shadow-lg backdrop-blur-sm"
+      <section className="relative min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-purple-100 overflow-hidden">
+        <div className="container mx-auto px-4 py-8 md:py-16 lg:py-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center min-h-[calc(100vh-8rem)] lg:min-h-[calc(100vh-10rem)]">
+            
+            {/* Left Side - Logo */}
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              className="flex items-center justify-center order-1 lg:order-1"
             >
-              <Link href="/about">Learn Our Story</Link>
-            </Button>
+              <div className="relative">
+                {/* Decorative background circle */}
+                <div className="absolute inset-0 bg-gradient-to-br from-pink-200/30 to-purple-300/30 rounded-full blur-3xl scale-150"></div>
+                <div className="relative z-10 p-8 md:p-12">
+                  <Image
+                    src="/logo-large.png"
+                    alt="Dreamy Delights Logo"
+                    width={400}
+                    height={400}
+                    className="w-full max-w-xs md:max-w-sm lg:max-w-md xl:max-w-lg h-auto drop-shadow-2xl"
+                    priority
+                  />
+                  {/* Floating elements */}
+                  <motion.div
+                    animate={{ y: [-10, 10, -10] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute -top-4 -right-4 w-8 h-8 bg-pink-300 rounded-full opacity-60"
+                  ></motion.div>
+                  <motion.div
+                    animate={{ y: [10, -10, 10] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute -bottom-6 -left-6 w-6 h-6 bg-purple-300 rounded-full opacity-60"
+                  ></motion.div>
+                  <motion.div
+                    animate={{ y: [-5, 15, -5] }}
+                    transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute top-1/2 -right-8 w-4 h-4 bg-rose-300 rounded-full opacity-60"
+                  ></motion.div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Right Side - Content */}
+            <motion.div
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="flex flex-col justify-center order-2 lg:order-2 text-center lg:text-left space-y-6 md:space-y-8"
+            >
+
+              {/* Main Heading */}
+              <motion.h1
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.6 }}
+                className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight"
+              >
+                <span className="bg-gradient-to-r from-pink-600 via-rose-600 to-purple-600 bg-clip-text text-transparent">
+                  Every Bite
+                </span>
+                <br />
+                <span className="text-gray-800">
+                  is a Sweet
+                </span>
+                <br />
+                <span className="bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 bg-clip-text text-transparent">
+                  Dream Come True
+                </span>
+              </motion.h1>
+
+              {/* Subtitle */}
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.8 }}
+                className="text-lg md:text-xl text-gray-600 max-w-xl mx-auto lg:mx-0 leading-relaxed"
+              >
+                Handcrafted with love, baked to perfection. Experience the magic of our artisanal cakes, cupcakes, and sweet treats that make every moment special.
+              </motion.p>
+
+              {/* Buttons */}
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 1.2 }}
+                className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto lg:mx-0 w-full"
+              >
+                <Button 
+                  asChild 
+                  size="lg" 
+                  className="flex-1 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 h-12 md:h-14 text-base md:text-lg font-semibold"
+                >
+                  <Link href="/menu" className="flex items-center justify-center">
+                    <ShoppingCart className="mr-2 h-5 w-5" />
+                    Order Now
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="lg"
+                  className="flex-1 border-2 border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-400 shadow-md hover:shadow-lg transition-all duration-300 h-12 md:h-14 text-base md:text-lg font-semibold"
+                >
+                  <Link href="/about" className="flex items-center justify-center">
+                    <Heart className="mr-2 h-5 w-5" />
+                    Our Story
+                  </Link>
+                </Button>
+              </motion.div>
+
+              {/* Customer Rating */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 1.4 }}
+                className="flex items-center justify-center lg:justify-start space-x-4 pt-4"
+              >
+                <div className="flex items-center space-x-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
+                  ))}
+                </div>
+                <div className="text-gray-600">
+                  <span className="font-semibold text-gray-800">4.9/5</span> from 50+ reviews
+                </div>
+              </motion.div>
+            </motion.div>
           </div>
-        </motion.div>
+        </div>
+
+        {/* Background decorative elements */}
+        <div className="absolute top-10 left-10 w-20 h-20 bg-pink-200 rounded-full opacity-20 blur-xl"></div>
+        <div className="absolute bottom-20 right-20 w-32 h-32 bg-purple-200 rounded-full opacity-20 blur-xl"></div>
+        <div className="absolute top-1/2 left-1/4 w-16 h-16 bg-rose-200 rounded-full opacity-30 blur-lg"></div>
       </section>
 
       {/* Featured Products */}
