@@ -27,6 +27,8 @@ import ProductManagement from "@/app/admin/components/ProductManagement";
 import OrderManagement from "@/app/admin/components/OrderManagement";
 import ContentManagement from "@/app/admin/components/ContentManagement";
 import UserManagement from "@/app/admin/components/UserManagement";
+import TestimonialManagement from "@/app/admin/components/TestimonialManagement";
+import TestimonialDebugPanel from "@/app/admin/components/TestimonialDebugPanel";
 import AnalyticsDashboard from "@/app/admin/components/AnalyticsDashboard";
 import AdminSettings from "@/app/admin/components/AdminSettings";
 import AdminDebugPanel from "@/app/admin/components/AdminDebugPanel";
@@ -129,6 +131,7 @@ export default function AdminDashboard() {
     { id: "orders", label: "Orders", icon: ShoppingCart, permission: ADMIN_PERMISSIONS.MANAGE_ORDERS },
     { id: "users", label: "Users", icon: Users, permission: ADMIN_PERMISSIONS.MANAGE_USERS },
     { id: "content", label: "Content", icon: FileText, permission: ADMIN_PERMISSIONS.MANAGE_CONTENT },
+    { id: "testimonials", label: "Testimonials", icon: Star, permission: ADMIN_PERMISSIONS.MANAGE_TESTIMONIALS },
     { id: "analytics", label: "Analytics", icon: TrendingUp, permission: ADMIN_PERMISSIONS.VIEW_ANALYTICS },
     { id: "settings", label: "Settings", icon: Settings, permission: ADMIN_PERMISSIONS.MANAGE_SETTINGS },
     { id: "debug", label: "Debug", icon: Eye, permission: ADMIN_PERMISSIONS.DEBUG },
@@ -172,21 +175,40 @@ export default function AdminDashboard() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          {/* Tab Navigation */}
-          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 gap-2 bg-white p-2 rounded-lg shadow-sm">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <TabsTrigger
-                  key={tab.id}
-                  value={tab.id}
-                  className="flex items-center space-x-2 data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700"
-                >
-                  <Icon className="w-4 h-4" />
-                  <span className="hidden sm:inline">{tab.label}</span>
-                </TabsTrigger>
-              );
-            })}
+          {/* Tab Navigation - Two Rows Layout */}
+          <TabsList className="h-auto bg-white p-3 rounded-lg shadow-sm grid grid-cols-1 gap-2">
+            {/* First Row */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+              {tabs.slice(0, Math.ceil(tabs.length / 2)).map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <TabsTrigger
+                    key={tab.id}
+                    value={tab.id}
+                    className="flex items-center justify-center space-x-2 p-3 rounded-md data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700 hover:bg-gray-50 transition-colors min-h-[3rem]"
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span className="text-sm font-medium">{tab.label}</span>
+                  </TabsTrigger>
+                );
+              })}
+            </div>
+            {/* Second Row */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+              {tabs.slice(Math.ceil(tabs.length / 2)).map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <TabsTrigger
+                    key={tab.id}
+                    value={tab.id}
+                    className="flex items-center justify-center space-x-2 p-3 rounded-md data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700 hover:bg-gray-50 transition-colors min-h-[3rem]"
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span className="text-sm font-medium">{tab.label}</span>
+                  </TabsTrigger>
+                );
+              })}
+            </div>
           </TabsList>
 
           {/* Overview Tab */}
@@ -317,6 +339,17 @@ export default function AdminDashboard() {
                       <span>Manage Content</span>
                     </Button>
                   )}
+
+                  {hasPermission(ADMIN_PERMISSIONS.MANAGE_TESTIMONIALS) && (
+                    <Button
+                      variant="outline"
+                      onClick={() => setActiveTab("testimonials")}
+                      className="h-20 flex flex-col space-y-2"
+                    >
+                      <Star className="w-6 h-6" />
+                      <span>Testimonials</span>
+                    </Button>
+                  )}
                   
                   {hasPermission(ADMIN_PERMISSIONS.VIEW_ANALYTICS) && (
                     <Button
@@ -378,6 +411,10 @@ export default function AdminDashboard() {
             <ContentManagement />
           </TabsContent>
 
+          <TabsContent value="testimonials">
+            <TestimonialManagement />
+          </TabsContent>
+
           <TabsContent value="analytics">
             <AnalyticsDashboard />
           </TabsContent>
@@ -387,7 +424,10 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="debug">
-            <AdminDebugPanel />
+            <div className="space-y-6">
+              <AdminDebugPanel />
+              <TestimonialDebugPanel />
+            </div>
           </TabsContent>
         </Tabs>
       </main>

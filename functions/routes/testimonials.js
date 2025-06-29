@@ -1,6 +1,9 @@
 const express = require("express");
 const TestimonialController = require("../controllers/TestimonialController");
-const {requireAdminMiddleware} = require("../middleware/auth");
+const {
+  verifyAdminToken,
+  requirePermission,
+} = require("../middleware/adminAuth");
 
 /**
  * Testimonial Routes - Express router for testimonial-related endpoints
@@ -15,12 +18,18 @@ router.get("/", (req, res) =>
 router.get("/featured", (req, res) =>
   testimonialController.getFeaturedTestimonials(req, res));
 
-// Admin routes - require admin authentication
-router.post("/", requireAdminMiddleware, (req, res) =>
-  testimonialController.createTestimonial(req, res));
-router.put("/:id", requireAdminMiddleware, (req, res) =>
-  testimonialController.updateTestimonial(req, res));
-router.delete("/:id", requireAdminMiddleware, (req, res) =>
-  testimonialController.deleteTestimonial(req, res));
+// Admin routes - require admin authentication and testimonial permission
+router.post("/",
+    verifyAdminToken,
+    requirePermission("manage_testimonials"),
+    (req, res) => testimonialController.createTestimonial(req, res));
+router.put("/:id",
+    verifyAdminToken,
+    requirePermission("manage_testimonials"),
+    (req, res) => testimonialController.updateTestimonial(req, res));
+router.delete("/:id",
+    verifyAdminToken,
+    requirePermission("manage_testimonials"),
+    (req, res) => testimonialController.deleteTestimonial(req, res));
 
 module.exports = router;
