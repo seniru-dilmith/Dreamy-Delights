@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Update Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ccc; }
+        button { padding: 10px 20px; margin: 10px 0; }
+        #output { background: #f0f0f0; padding: 10px; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>Product Update API Test</h1>
+    
+    <div class="test-section">
+        <h3>Test Admin Token</h3>
+        <button onclick="testAdminToken()">Generate and Test Admin Token</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test Product Update (JSON)</h3>
+        <input type="text" id="productName" placeholder="Product Name" value="Test Product Name">
+        <input type="number" id="productPrice" placeholder="Price" value="5.99" step="0.01">
+        <input type="number" id="productStock" placeholder="Stock" value="10">
+        <textarea id="productDescription" placeholder="Description">Test product description</textarea>
+        <select id="productCategory" title="Product Category">
+            <option value="Cakes">Cakes</option>
+            <option value="Cupcakes">Cupcakes</option>
+            <option value="Pastries">Pastries</option>
+            <option value="Cookies">Cookies</option>
+            <option value="Breads">Breads</option>
+            <option value="Desserts">Desserts</option>
+        </select>
+        <br>
+        <button onclick="testProductUpdate()">Update Product (JSON)</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test Image Upload (FormData)</h3>
+        <button onclick="testImageUpload()">Test Image Upload with FormData</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>Output</h3>
+        <div id="output"></div>
+    </div>
+
+    <script>
+        let adminToken = null;
+        const productId = 'tCoclMciMbFfqspQIGV9'; // Double Chocolate Brownies ID
+        const API_BASE = 'https://api-cvfhs7orea-uc.a.run.app/api';
+        
+        function log(message) {
+            const output = document.getElementById('output');
+            const timestamp = new Date().toLocaleTimeString();
+            output.textContent += `[${timestamp}] ${message}\n`;
+            console.log(message);
+        }
+        
+        function clearOutput() {
+            document.getElementById('output').textContent = '';
+        }
+        
+        async function generateAdminToken() {
+            // We'll use a pre-generated token for testing
+            // In a real app, this would come from the login process
+            const payload = {
+                id: 'test-admin-id',
+                adminId: 'test-admin-id',
+                username: 'admin',
+                role: 'super_admin',
+                permissions: ['manage_products', 'manage_orders', 'view_analytics'],
+                type: 'admin'
+            };
+            
+            // For testing, we'll generate a simple token
+            // Note: In production, this should be done server-side
+            const header = btoa(JSON.stringify({alg: "HS256", typ: "JWT"}));
+            const payloadBase64 = btoa(JSON.stringify(payload));
+            const signature = 'test-signature'; // Simplified for testing
+            
+            return `${header}.${payloadBase64}.${signature}`;
+        }
+        
+        async function testAdminToken() {
+            clearOutput();
+            log('Generating admin token...');
+            
+            try {
+                // Use a pre-signed JWT token for testing
+                adminToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6InRlc3QtYWRtaW4taWQiLCJhZG1pbklkIjoidGVzdC1hZG1pbi1pZCIsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlIjoic3VwZXJfYWRtaW4iLCJwZXJtaXNzaW9ucyI6WyJtYW5hZ2VfcHJvZHVjdHMiLCJtYW5hZ2Vfb3JkZXJzIiwidmlld19hbmFseXRpY3MiXSwidHlwZSI6ImFkbWluIiwiaWF0IjoxNzE5Njg2ODM0LCJleHAiOjE3MTk3NzMyMzR9.TEST_SIGNATURE';
+                
+                log('Admin token generated successfully');
+                log('Token: ' + adminToken.substring(0, 50) + '...');
+                
+                // Test token validity by fetching products
+                const response = await fetch(`${API_BASE}/admin/products`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`Token validation successful. Found ${data.data ? data.data.length : 0} products.`);
+                } else {
+                    log(`Token validation failed: ${response.status} ${response.statusText}`);
+                }
+                
+            } catch (error) {
+                log('Error generating/testing admin token: ' + error.message);
+            }
+        }
+        
+        async function testProductUpdate() {
+            if (!adminToken) {
+                log('Please generate admin token first');
+                return;
+            }
+            
+            clearOutput();
+            log('Testing product update...');
+            
+            try {
+                const updateData = {
+                    name: document.getElementById('productName').value,
+                    price: parseFloat(document.getElementById('productPrice').value),
+                    stock: parseInt(document.getElementById('productStock').value),
+                    description: document.getElementById('productDescription').value,
+                    category: document.getElementById('productCategory').value,
+                    featured: true,
+                    active: true
+                };
+                
+                log('Update data: ' + JSON.stringify(updateData, null, 2));
+                log('Product ID: ' + productId);
+                log('Using JSON Content-Type...');
+                
+                const response = await fetch(`${API_BASE}/admin/products/${productId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+                
+                log(`Response status: ${response.status} ${response.statusText}`);
+                
+                const responseData = await response.json();
+                log('Response data: ' + JSON.stringify(responseData, null, 2));
+                
+                if (response.ok && responseData.success) {
+                    log('✅ Product updated successfully!');
+                } else {
+                    log('❌ Product update failed: ' + (responseData.message || 'Unknown error'));
+                }
+                
+            } catch (error) {
+                log('Error during product update: ' + error.message);
+            }
+        }
+        
+        async function testImageUpload() {
+            if (!adminToken) {
+                log('Please generate admin token first');
+                return;
+            }
+            
+            clearOutput();
+            log('Testing image upload with FormData...');
+            
+            try {
+                // Create a proper FormData object with a small test file
+                const formData = new FormData();
+                formData.append('name', 'Test Product with Image Upload');
+                formData.append('description', 'Testing image upload functionality');
+                formData.append('price', '12.99');
+                formData.append('category', 'Cakes');
+                formData.append('stock', '8');
+                formData.append('featured', 'true');
+                formData.append('active', 'true');
+                
+                // Create a small test image (1x1 pixel PNG)
+                const canvas = document.createElement('canvas');
+                canvas.width = 1;
+                canvas.height = 1;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#FF0000';
+                ctx.fillRect(0, 0, 1, 1);
+                
+                // Convert canvas to blob
+                canvas.toBlob(async (blob) => {
+                    try {
+                        formData.append('image', blob, 'test-image.png');
+                        
+                        log('Sending FormData with image...');
+                        log('FormData entries:');
+                        for (const [key, value] of formData.entries()) {
+                            if (value instanceof File || value instanceof Blob) {
+                                log(`  ${key}: ${value.constructor.name} (${value.size} bytes, ${value.type})`);
+                            } else {
+                                log(`  ${key}: ${value}`);
+                            }
+                        }
+                        
+                        const response = await fetch(`${API_BASE}/admin/products`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${adminToken}`
+                                // Don't set Content-Type for FormData - let browser handle it
+                            },
+                            body: formData
+                        });
+                        
+                        log(`Response status: ${response.status} ${response.statusText}`);
+                        
+                        const responseData = await response.json();
+                        log('Response data: ' + JSON.stringify(responseData, null, 2));
+                        
+                        if (response.ok && responseData.success) {
+                            log('✅ Image upload test successful!');
+                            log('Product ID: ' + responseData.data.id);
+                            if (responseData.data.imageUrl) {
+                                log('Image URL: ' + responseData.data.imageUrl);
+                            }
+                        } else {
+                            log('❌ Image upload test failed: ' + (responseData.message || 'Unknown error'));
+                        }
+                        
+                    } catch (error) {
+                        log('Error during image upload test: ' + error.message);
+                    }
+                }, 'image/png');
+                
+            } catch (error) {
+                log('Error setting up image upload test: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

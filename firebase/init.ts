@@ -3,6 +3,8 @@ import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { getAuth, signInWithCustomToken, signOut, onAuthStateChanged } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -14,6 +16,7 @@ const firebaseConfig = {
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || process.env.FIREBASE_AUTH_DOMAIN,
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || process.env.FIREBASE_API_KEY,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || process.env.FIREBASE_APP_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || process.env.FIREBASE_STORAGE_BUCKET,
 };
 
 // Validate that we have the required configuration
@@ -29,6 +32,8 @@ let app: any = null;
 let analytics: any = null;
 let functions: any = null;
 let auth: any = null;
+let db: any = null;
+let storage: any = null;
 let isFirebaseInitialized = false;
 
 if (isValidConfig) {
@@ -43,6 +48,8 @@ if (isValidConfig) {
 
     functions = getFunctions(app);
     auth = getAuth(app);
+    db = getFirestore(app);
+    storage = getStorage(app);
     isFirebaseInitialized = true;
     console.info('Firebase initialized successfully with environment variables');
   } catch (error) {
@@ -52,6 +59,8 @@ if (isValidConfig) {
     analytics = null;
     functions = null;
     auth = null;
+    db = null;
+    storage = null;
     isFirebaseInitialized = false;
   }
 } else {
@@ -69,10 +78,14 @@ export const authFunctions = {
   getCurrentUser: functions ? httpsCallable(functions, 'getCurrentUser') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
   refreshToken: functions ? httpsCallable(functions, 'refreshToken') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
   setUserRole: functions ? httpsCallable(functions, 'setUserRole') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
+  // Admin authentication functions
+  adminLogin: functions ? httpsCallable(functions, 'adminLogin') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
+  adminLogout: functions ? httpsCallable(functions, 'adminLogout') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
+  verifyAdminToken: functions ? httpsCallable(functions, 'verifyAdminToken') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
 };
 
 // Helper function to check if Firebase is properly initialized
 export const isFirebaseReady = () => isFirebaseInitialized;
 
 // Export Firebase client auth for token management
-export { app, analytics, functions, auth, signInWithCustomToken, signOut, onAuthStateChanged };
+export { app, analytics, functions, auth, db, storage, signInWithCustomToken, signOut, onAuthStateChanged };

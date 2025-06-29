@@ -4,13 +4,13 @@
 // Base URL for Firebase Functions API
 const API_BASE_URL = 'https://api-cvfhs7orea-uc.a.run.app/api';
 
-// Legacy Direct Function URLs (for backward compatibility)
+// Use the main API endpoint for all requests
 const FUNCTION_URLS = {
-  getFeaturedProducts: 'https://getfeaturedproducts-cvfhs7orea-uc.a.run.app',
-  getProducts: 'https://getproducts-cvfhs7orea-uc.a.run.app',
-  getAllOrders: 'https://getallorders-cvfhs7orea-uc.a.run.app',
-  manageProduct: 'https://manageproduct-cvfhs7orea-uc.a.run.app',
-  getServerTime: 'https://getservertime-cvfhs7orea-uc.a.run.app'
+  getFeaturedProducts: `${API_BASE_URL}/products?featured=true`,
+  getProducts: `${API_BASE_URL}/products`,
+  getAllOrders: `${API_BASE_URL}/admin/orders`,
+  manageProduct: `${API_BASE_URL}/admin/products`,
+  getServerTime: `${API_BASE_URL}/time`
 };
 
 // Base URL for Firebase Functions (for callable functions)
@@ -76,12 +76,113 @@ const callFunction = async (functionName: string, data?: any) => {
   }
 };
 
+// Admin token management
+// Admin token management with localStorage (synced with AdminContext)
+const ADMIN_TOKEN_KEY = 'dreamy_admin_token';
+const ADMIN_SESSION_DURATION = 4 * 60 * 60 * 1000; // 4 hours
+
+// Helper function to get admin auth token from localStorage
+const getAdminToken = () => {
+  if (typeof window === 'undefined') return null;
+  
+  try {
+    const encryptedToken = localStorage.getItem(ADMIN_TOKEN_KEY);
+    if (!encryptedToken) return null;
+
+    // Import encryption utility dynamically to avoid SSR issues
+    const { ClientEncryption } = require('@/utils/encryption');
+    const tokenData = JSON.parse(ClientEncryption.decrypt(encryptedToken));
+    
+    // Check if token is expired
+    if (Date.now() - tokenData.timestamp > ADMIN_SESSION_DURATION) {
+      localStorage.removeItem(ADMIN_TOKEN_KEY);
+      return null;
+    }
+    
+    return tokenData.token;
+  } catch (error) {
+    console.error('Error getting admin token:', error);
+    localStorage.removeItem(ADMIN_TOKEN_KEY);
+    return null;
+  }
+};
+
+// Helper function to set admin auth token in localStorage (synced with AdminContext)
+export const setAdminToken = (token: string | null) => {
+  if (typeof window === 'undefined') return;
+  
+  if (token) {
+    try {
+      // Import encryption utility dynamically to avoid SSR issues
+      const { ClientEncryption } = require('@/utils/encryption');
+      const tokenData = {
+        token,
+        timestamp: Date.now(),
+      };
+      const encryptedToken = ClientEncryption.encrypt(JSON.stringify(tokenData));
+      localStorage.setItem(ADMIN_TOKEN_KEY, encryptedToken);
+    } catch (error) {
+      console.error('Error setting admin token:', error);
+    }
+  } else {
+    localStorage.removeItem(ADMIN_TOKEN_KEY);
+  }
+};
+
+// Helper function for admin HTTP requests with auth
+const fetchWithAdminAuth = async (url: string, options: RequestInit = {}) => {
+  const token = getAdminToken();
+  console.log('🔐 fetchWithAdminAuth called:', {
+    url,
+    method: options.method || 'GET',
+    hasToken: !!token,
+    tokenPreview: token ? `${token.substring(0, 20)}...` : 'No token'
+  });
+  
+  const headers: Record<string, string> = {
+    ...(options.headers as Record<string, string>),
+  };
+
+  // Only set Content-Type if it's not FormData (for file uploads)
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  } else {
+    console.error('🔐 No admin token available for request');
+  }
+
+  console.log('🔐 Request headers:', headers);
+
+  const response = await fetch(url, {
+    ...options,
+    headers,
+  });
+
+  console.log('🔐 Response status:', response.status);
+  console.log('🔐 Response headers:', Object.fromEntries(response.headers.entries()));
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    console.error('🔐 Request failed:', {
+      status: response.status,
+      statusText: response.statusText,
+      errorData
+    });
+    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+  }
+
+  return response;
+};
+
 // PUBLIC API FUNCTIONS (No authentication required)
 
 export const fetchFeaturedProducts = async () => {
   try {
-    // Use the new dedicated featured products endpoint
-    const response = await fetch(`${API_BASE_URL}/featured-products`);
+    // Use the unified products endpoint with featured filter
+    const response = await fetch(`${API_BASE_URL}/products/featured`);
     
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: Failed to fetch featured products`);
@@ -263,49 +364,525 @@ export const updateOrderStatus = async (orderId: string, status: string) => {
   }
 };
 
-export const fetchTestimonials = async (params: {
-  limit?: number;
-} = {}) => {
+// ==========================================
+// TESTIMONIALS API
+// ==========================================
+
+export const fetchTestimonials = async () => {
   try {
-    const queryParams = new URLSearchParams();
-    if (params.limit) queryParams.append('limit', params.limit.toString());
-
-    const url = `${API_BASE_URL}/testimonials${
-      queryParams.toString() ? `?${queryParams.toString()}` : ''
-    }`;
-
-    const response = await fetch(url);
+    const response = await fetch(`${API_BASE_URL}/testimonials`);
+    
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: Failed to fetch testimonials`);
+      throw new Error(`Testimonials fetch failed: ${response.statusText}`);
     }
+
     return await response.json();
   } catch (error) {
     console.error('Error fetching testimonials:', error);
-    
-    // Return empty result structure instead of throwing
-    return {
-      success: false,
-      data: [],
-      error: error instanceof Error ? error.message : 'Unknown error occurred'
-    };
+    throw error;
   }
 };
 
-export const fetchFeaturedTestimonials = async () => {
+export const fetchFeaturedTestimonials = async (limit = 3) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/testimonials/featured`);
+    const response = await fetch(`${API_BASE_URL}/testimonials/featured?limit=${limit}`);
+    
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: Failed to fetch featured testimonials`);
+      throw new Error(`Featured testimonials fetch failed: ${response.statusText}`);
     }
+
     return await response.json();
   } catch (error) {
     console.error('Error fetching featured testimonials:', error);
+    throw error;
+  }
+};
+
+export const createTestimonialAdmin = async (testimonialData: {
+  name: string;
+  text: string;
+  rating: number;
+  featured?: boolean;
+}) => {
+  try {
+    const token = getAdminToken();
+    const response = await fetch(`${API_BASE_URL}/testimonials`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(testimonialData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Testimonial creation failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating testimonial:', error);
+    throw error;
+  }
+};
+
+export const updateTestimonialAdmin = async (id: string, updateData: {
+  name?: string;
+  text?: string;
+  rating?: number;
+  featured?: boolean;
+}) => {
+  try {
+    const token = getAdminToken();
     
-    // Return empty result structure instead of throwing
-    return {
-      success: false,
-      data: [],
-      error: error instanceof Error ? error.message : 'Unknown error occurred'
-    };
+    if (!token) {
+      throw new Error('No admin token available. Please log in again.');
+    }
+
+    console.log('🔄 Updating testimonial:', { id, updateData, tokenPreview: token.substring(0, 20) + '...' });
+
+    const response = await fetch(`${API_BASE_URL}/testimonials/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(updateData),
+    });
+
+    console.log('📡 Update response:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok,
+      headers: Object.fromEntries(response.headers.entries())
+    });
+
+    if (!response.ok) {
+      // Get detailed error information
+      const errorText = await response.text();
+      console.error('❌ Update failed with response:', errorText);
+      
+      let errorMessage = `Testimonial update failed: ${response.status} ${response.statusText}`;
+      
+      try {
+        const errorData = JSON.parse(errorText);
+        if (errorData.message) {
+          errorMessage += ` - ${errorData.message}`;
+        }
+      } catch {
+        if (errorText) {
+          errorMessage += ` - ${errorText}`;
+        }
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log('✅ Update successful:', result);
+    return result;
+  } catch (error) {
+    console.error('Error updating testimonial:', error);
+    throw error;
+  }
+};
+
+export const deleteTestimonialAdmin = async (id: string) => {
+  try {
+    const token = getAdminToken();
+    const response = await fetch(`${API_BASE_URL}/testimonials/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Testimonial deletion failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error deleting testimonial:', error);
+    throw error;
+  }
+};
+
+// Admin API Functions
+export const adminLogin = async (credentials: {
+  username: string;
+  password: string;
+}) => {
+  try {
+    const { functions } = await import('./init');
+    const { httpsCallable } = await import('firebase/functions');
+    
+    const loginFunction = httpsCallable(functions, 'adminLogin');
+    const result = await loginFunction(credentials);
+    
+    if (result.data && (result.data as any).success) {
+      setAdminToken((result.data as any).token);
+    }
+    
+    return result.data;
+  } catch (error) {
+    console.error('firebase/api: Error in admin login:', error);
+    throw error;
+  }
+};
+
+export const adminLogout = async () => {
+  try {
+    setAdminToken(null);
+    
+    const { functions } = await import('./init');
+    const { httpsCallable } = await import('firebase/functions');
+    
+    const logoutFunction = httpsCallable(functions, 'adminLogout');
+    return await logoutFunction({});
+  } catch (error) {
+    console.error('Error in admin logout:', error);
+    throw error;
+  }
+};
+
+export const verifyAdminToken = async (token: string) => {
+  try {
+    const { functions } = await import('./init');
+    const { httpsCallable } = await import('firebase/functions');
+    
+    const verifyFunction = httpsCallable(functions, 'verifyAdminToken');
+    const result = await verifyFunction({ token });
+    
+    return result.data;
+  } catch (error) {
+    console.error('Error verifying admin token:', error);
+    throw error;
+  }
+};
+
+export const createInitialAdmin = async (adminData: {
+  username: string;
+  email: string;
+  password: string;
+  setupKey: string;
+}) => {
+  try {
+    const { functions } = await import('./init');
+    const { httpsCallable } = await import('firebase/functions');
+    
+    const createAdminFunction = httpsCallable(functions, 'createInitialAdmin');
+    const result = await createAdminFunction(adminData);
+    
+    return result.data;
+  } catch (error) {
+    console.error('Error creating initial admin:', error);
+    throw error;
+  }
+};
+
+// Admin CRUD Operations
+export const adminFetchProducts = async () => {
+  try {
+    const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/products`);
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching admin products:', error);
+    throw error;
+  }
+};
+
+export const adminCreateProduct = async (productData: FormData) => {
+  try {
+    const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/products`, {
+      method: 'POST',
+      body: productData,
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating product:', error);
+    throw error;
+  }
+};
+
+export const adminCreateProductJSON = async (productData: object) => {
+  try {
+    console.log('🌐 adminCreateProductJSON called with:', {
+      productData,
+      url: `${API_BASE_URL}/admin/products`
+    });
+    
+    const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/products`, {
+      method: 'POST',
+      body: JSON.stringify(productData),
+    });
+    
+    const result = await response.json();
+    console.log('🌐 adminCreateProductJSON response:', result);
+    return result;
+  } catch (error) {
+    console.error('🌐 Error creating product (JSON):', error);
+    throw error;
+  }
+};
+
+export const adminUpdateProduct = async (id: string, productData: FormData) => {
+  try {
+    const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/products/${id}`, {
+      method: 'PUT',
+      body: productData,
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating product:', error);
+    throw error;
+  }
+};
+
+export const adminUpdateProductJSON = async (id: string, productData: object) => {
+  try {
+    console.log('🌐 adminUpdateProductJSON called with:', {
+      id,
+      idType: typeof id,
+      idLength: id ? id.length : 0,
+      productData,
+      url: `${API_BASE_URL}/admin/products/${id}`
+    });
+    
+    // Validate inputs
+    if (!id || typeof id !== 'string') {
+      console.error('🌐 Invalid product ID:', { id, type: typeof id });
+      throw new Error('Invalid product ID provided');
+    }
+    
+    if (!productData || typeof productData !== 'object') {
+      console.error('🌐 Invalid product data:', { productData, type: typeof productData });
+      throw new Error('Invalid product data provided');
+    }
+    
+    const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/products/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(productData),
+    });
+    
+    const result = await response.json();
+    console.log('🌐 adminUpdateProductJSON response:', result);
+    return result;
+  } catch (error) {
+    console.error('🌐 Error updating product (JSON):', {
+      error,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      id,
+      productData
+    });
+    throw error;
+  }
+};
+
+export const adminDeleteProduct = async (id: string) => {
+  try {
+    const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/products/${id}`, {
+      method: 'DELETE',
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    throw error;
+  }
+};
+
+export const adminToggleProductFeatured = async (id: string) => {
+  try {
+    const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/products/${id}/featured`, {
+      method: 'PUT',
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error toggling product featured status:', error);
+    throw error;
+  }
+};
+
+export const adminFetchOrders = async () => {
+  try {
+    const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/orders`);
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching admin orders:', error);
+    throw error;
+  }
+};
+
+export const adminUpdateOrderStatus = async (id: string, status: string) => {
+  try {
+    const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/orders/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating order status:', error);
+    throw error;
+  }
+};
+
+export const adminFetchUsers = async () => {
+  try {
+    const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/users`);
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching admin users:', error);
+    throw error;
+  }
+};
+
+export const adminFetchContent = async () => {
+  try {
+    const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/content`);
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching admin content:', error);
+    throw error;
+  }
+};
+
+export const adminUpdateContent = async (section: string, contentData: any) => {
+  try {
+    const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/content/${section}`, {
+      method: 'PUT',
+      body: JSON.stringify(contentData),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating content:', error);
+    throw error;
+  }
+};
+
+export const adminFetchAnalytics = async () => {
+  try {
+    const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/analytics`);
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching analytics:', error);
+    throw error;
+  }
+};
+
+export const adminFetchSettings = async () => {
+  try {
+    const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/settings`);
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching admin settings:', error);
+    throw error;
+  }
+};
+
+export const adminUpdateSettings = async (key: string, settingData: any) => {
+  try {
+    const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/settings/${key}`, {
+      method: 'PUT',
+      body: JSON.stringify(settingData),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating settings:', error);
+    throw error;
+  }
+};
+
+// ADMIN API FUNCTIONS
+
+// Fetch dashboard statistics
+export const fetchDashboardStats = async () => {
+  try {
+    const token = getAdminToken();
+    const response = await fetch(`${API_BASE_URL}/admin/dashboard/stats`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Dashboard stats fetch failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error);
+    throw error;
+  }
+};
+
+// Fetch all users for admin management
+export const fetchAllUsers = async () => {
+  try {
+    const token = getAdminToken();
+    const response = await fetch(`${API_BASE_URL}/admin/users`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Users fetch failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    throw error;
+  }
+};
+
+// Fetch all orders for admin management  
+export const fetchAllOrdersAdmin = async () => {
+  try {
+    const token = getAdminToken();
+    const response = await fetch(`${API_BASE_URL}/admin/orders`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Orders fetch failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    throw error;
+  }
+};
+
+// Fetch all products for admin management
+export const fetchAllProductsAdmin = async () => {
+  try {
+    const token = getAdminToken();
+    const response = await fetch(`${API_BASE_URL}/admin/products`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Products fetch failed: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    throw error;
   }
 };

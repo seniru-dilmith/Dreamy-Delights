@@ -17,8 +17,16 @@ class ProductService {
    * @return {Promise<Object>} Products data with metadata
    */
   async getProducts(options = {}) {
-    const {page = 1, limit = 10, category} = options;
-    const products = await this.productModel.getAll({limit, category});
+    const {page = 1, limit = 10, category, featured} = options;
+    console.log("ProductService.getProducts called with:", options);
+    
+    const products = await this.productModel.getAll({
+      limit,
+      category,
+      featured,
+    });
+
+    console.log(`Retrieved ${products.length} products, featured: ${featured}`);
 
     return {
       success: true,
@@ -88,6 +96,34 @@ class ProductService {
     return {
       success: true,
       message: "Product deleted successfully",
+    };
+  }
+
+  /**
+   * Toggle featured status of a product
+   * @param {string} productId - Product ID
+   * @return {Promise<Object>} Toggle result with new status
+   */
+  async toggleFeaturedStatus(productId) {
+    if (!productId) {
+      throw new Error("Product ID is required");
+    }
+
+    // Get current product to check featured status
+    const product = await this.productModel.getById(productId);
+    if (!product) {
+      throw new Error("Product not found");
+    }
+
+    const newFeaturedStatus = !product.featured;
+    await this.productModel.update(productId, {featured: newFeaturedStatus});
+
+    return {
+      success: true,
+      featured: newFeaturedStatus,
+      message: newFeaturedStatus ?
+        "Product added to featured products" :
+        "Product removed from featured products",
     };
   }
 }
