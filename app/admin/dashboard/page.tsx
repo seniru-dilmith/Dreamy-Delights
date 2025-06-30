@@ -76,24 +76,29 @@ export default function AdminDashboard() {
     setIsLoadingStats(true);
     try {
       const response = await fetchDashboardStats();
-      if (response.success) {
+      if (response.success && response.data) {
         setStats(response.data);
       } else {
-        console.error("Failed to load dashboard stats:", response.message);
-        // Fallback to default values
-        setStats({
-          totalProducts: 0,
-          totalOrders: 0,
-          totalUsers: 0,
-          totalRevenue: 0,
-          recentOrders: 0,
-          pendingOrders: 0,
-          averageOrderValue: 0,
-        });
+        console.warn("Dashboard stats API unavailable, using fallback data:", response.message);
+        // Use fallback data from the API response
+        if (response.data) {
+          setStats(response.data);
+        } else {
+          // Final fallback if no data at all
+          setStats({
+            totalProducts: 0,
+            totalOrders: 0,
+            totalUsers: 0,
+            totalRevenue: 0,
+            recentOrders: 0,
+            pendingOrders: 0,
+            averageOrderValue: 0
+          });
+        }
       }
     } catch (error) {
       console.error("Error loading dashboard stats:", error);
-      // Fallback to default values on error
+      // Final fallback for any unexpected errors
       setStats({
         totalProducts: 0,
         totalOrders: 0,
@@ -101,7 +106,7 @@ export default function AdminDashboard() {
         totalRevenue: 0,
         recentOrders: 0,
         pendingOrders: 0,
-        averageOrderValue: 0,
+        averageOrderValue: 0
       });
     } finally {
       setIsLoadingStats(false);
