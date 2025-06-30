@@ -516,17 +516,24 @@ export const adminLogin = async (credentials: {
   password: string;
 }) => {
   try {
-    const { functions } = await import('./init');
-    const { httpsCallable } = await import('firebase/functions');
-    
-    const loginFunction = httpsCallable(functions, 'adminLogin');
-    const result = await loginFunction(credentials);
-    
-    if (result.data && (result.data as any).success) {
-      setAdminToken((result.data as any).token);
+    const response = await fetch(`${API_BASE_URL}/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Login failed');
+      throw new Error(errorText);
     }
-    
-    return result.data;
+
+    const result = await response.json();
+
+    if (result.success && result.token) {
+      setAdminToken(result.token);
+    }
+
+    return result;
   } catch (error) {
     console.error('firebase/api: Error in admin login:', error);
     throw error;
