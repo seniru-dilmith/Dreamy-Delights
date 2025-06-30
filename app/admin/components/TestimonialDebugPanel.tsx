@@ -150,30 +150,19 @@ export default function TestimonialDebugPanel() {
       
       log(`🔑 Using token: ${tokenData.token.substring(0, 20)}...`);
       
-      // Test direct fetch to testimonials endpoint
-      const response = await fetch('https://api-cvfhs7orea-uc.a.run.app/api/testimonials', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${tokenData.token}`,
-        },
-        body: JSON.stringify({
-          name: 'Direct API Test',
-          text: 'This is a direct API test to debug authentication.',
-          rating: 5,
-          featured: false
-        }),
+      // Test library testimonial API
+      log('🧪 Testing testimonial creation via api utility');
+      const result = await createTestimonialAdmin({
+        name: 'Debug Testimonial',
+        text: 'Debug panel testimonial creation.',
+        rating: 5,
+        featured: false
       });
-
-      log(`📡 Response status: ${response.status} ${response.statusText}`);
-      
-      const responseText = await response.text();
-      log(`📦 Response body: ${responseText}`);
-      
-      if (response.ok) {
-        log('✅ Direct API call successful!');
+      log(`📦 API result: ${JSON.stringify(result)}`);
+      if (result.success) {
+        log('✅ Testimonial created successfully via API');
       } else {
-        log('❌ Direct API call failed');
+        log(`❌ API error: ${result.message}`);
       }
       
     } catch (error) {
