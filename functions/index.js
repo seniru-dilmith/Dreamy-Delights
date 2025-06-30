@@ -14,12 +14,20 @@ admin.initializeApp({
 // Create Express app
 const app = express();
 
-// CORS options
+// CORS options - explicitly allow production domain
 const corsOptions = {
-  origin: true,
+  origin: [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "https://thedreamydelights.com",
+    "https://www.thedreamydelights.com",
+    "https://dreamy-delights-882ff.web.app",
+    "https://dreamy-delights-882ff.firebaseapp.com",
+  ],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
+  optionsSuccessStatus: 200,
 };
 
 // Middleware for CORS and JSON
@@ -27,8 +35,8 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 
-// Mount API routes
-app.use("/", apiRouter);
+// Mount API routes under /api prefix
+app.use("/api", apiRouter);
 
 // Export a single HTTP function
 exports.api = functions.https.onRequest(app);

@@ -81,10 +81,7 @@ export const authFunctions = {
   getCurrentUser: functions ? httpsCallable(functions, 'getCurrentUser') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
   refreshToken: functions ? httpsCallable(functions, 'refreshToken') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
   setUserRole: functions ? httpsCallable(functions, 'setUserRole') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
-  // Admin authentication functions
-  adminLogin: functions ? httpsCallable(functions, 'adminLogin') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
-  adminLogout: functions ? httpsCallable(functions, 'adminLogout') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
-  verifyAdminToken: functions ? httpsCallable(functions, 'verifyAdminToken') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
+  // Admin functions removed - use HTTP endpoints in firebase/api.ts instead
 };
 
 // Helper function to check if Firebase is properly initialized
