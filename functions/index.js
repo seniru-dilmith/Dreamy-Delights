@@ -4,12 +4,11 @@ const express = require("express");
 const cors = require("cors");
 const apiRouter = require("./routes");
 
-// Initialize Firebase Admin SDKfirebase deploy --only functionsfirebase
-// deploy --only functionsfirebase deploy --only functionsfirebase
-// deploy --only functionsfirebase deploy --only functionsfirebase
-// deploy --only functionsfirebase deploy --only functions
+// Initialize Firebase Admin SDK with explicit bucket name
+console.log("Initializing Firebase Admin SDK with storage bucket");
+
 admin.initializeApp({
-  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+  storageBucket: "dreamy-delights-882ff.firebasestorage.app",
 });
 
 // Create Express app

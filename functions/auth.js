@@ -404,8 +404,7 @@ exports.setUserRole = functions.https.onCall(async (data, context) => {
 });
 
 // Admin authentication functions
-const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET ||
-    "fallback-secret-change-in-production";
+const ADMIN_JWT_SECRET = "fallback-secret-change-in-production";
 
 /**
  * Admin login function
