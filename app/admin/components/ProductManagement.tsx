@@ -217,8 +217,12 @@ export default function ProductManagement() {
         resetForm();
         setIsDialogOpen(false);
       } else {
-        console.error('❌ Product operation failed:', response.message);
-        alert(response.message || "Failed to save product");
+        console.error('❌ Product operation failed:', response);
+        // Display full error details
+        const status = response.status ?? 'N/A';
+        const statusText = response.statusText ?? '';
+        const errorData = response.errorData ?? response;
+        alert(`Error ${status} ${statusText}: ${response.message}\nDetails: ${JSON.stringify(errorData, null, 2)}`);
       }
     } catch (error) {
       console.error('💥 Error saving product:', error);

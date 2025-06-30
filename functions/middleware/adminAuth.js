@@ -1,8 +1,8 @@
 const jwt = require("jsonwebtoken");
 const admin = require("firebase-admin");
 
-const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET ||
-    "fallback-secret-change-in-production";
+const ADMIN_JWT_SECRET =
+    "your-super-secure-jwt-secret-change-this-in-production";
 
 /**
  * Middleware to verify admin JWT token for HTTP requests
