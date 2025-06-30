@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const admin = require("firebase-admin");
 
+// Use the same secret as configured in functions.config()
 const ADMIN_JWT_SECRET =
     "your-super-secure-jwt-secret-change-this-in-production";
 
