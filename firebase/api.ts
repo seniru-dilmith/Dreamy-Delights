@@ -1,8 +1,9 @@
 // Direct Firebase Functions API utilities
 // No Next.js backend - only Firebase Cloud Functions
 
-// Base URL for Firebase Functions API
-const API_BASE_URL = 'https://api-cvfhs7orea-uc.a.run.app/api';
+// Base URL for Firebase HTTP functions (exposed to client)
+// Uses public env var NEXT_PUBLIC_FUNCTIONS_URL and includes the '/api' path for HTTP endpoints
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_FUNCTIONS_URL}/api`;
 
 // Use the main API endpoint for all requests
 const FUNCTION_URLS = {
@@ -14,7 +15,7 @@ const FUNCTION_URLS = {
 };
 
 // Base URL for Firebase Functions (for callable functions)
-const FUNCTIONS_BASE_URL = 'https://us-central1-dreamy-delights-882ff.cloudfunctions.net';
+const FUNCTIONS_BASE_URL = process.env.NEXT_PUBLIC_FUNCTIONS_URL;
 
 // Helper function to get auth token (client-side only)
 const getAuthToken = async () => {
@@ -82,7 +83,7 @@ const ADMIN_TOKEN_KEY = 'dreamy_admin_token';
 const ADMIN_SESSION_DURATION = 4 * 60 * 60 * 1000; // 4 hours
 
 // Helper function to get admin auth token from localStorage
-const getAdminToken = () => {
+export const getAdminToken = () => {
   if (typeof window === 'undefined') return null;
   
   try {
@@ -585,11 +586,46 @@ export const createInitialAdmin = async (adminData: {
 // Admin CRUD Operations
 export const adminFetchProducts = async () => {
   try {
+    console.log('🛍️ Admin Products API Call:');
+    console.log('- URL:', `${API_BASE_URL}/admin/products`);
+    
+    const token = getAdminToken();
+    console.log('- Token available:', !!token);
+    console.log('- Token preview:', token ? token.substring(0, 20) + '...' : 'No token');
+    
+    if (!token) {
+      console.warn('No admin token available for products fetch');
+      return {
+        success: false,
+        message: 'No authentication token',
+        data: []
+      };
+    }
+
     const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/products`);
-    return await response.json();
+    const result = await response.json();
+    
+    console.log('📦 Admin Products API Response:', {
+      success: result.success,
+      dataCount: result.data?.length || 0,
+      message: result.message
+    });
+    
+    if (result.success && result.data) {
+      console.log('✅ Products loaded successfully:', result.data.length, 'products');
+      result.data.forEach((product: any, index: number) => {
+        console.log(`  ${index + 1}. ${product.name} (ID: ${product.id})`);
+      });
+    }
+    
+    return result;
   } catch (error) {
-    console.error('Error fetching admin products:', error);
-    throw error;
+    console.error('❌ Error fetching admin products:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      data: []
+    };
   }
 };
 
@@ -799,6 +835,21 @@ export const adminUpdateSettings = async (key: string, settingData: any) => {
 export const fetchDashboardStats = async () => {
   try {
     const token = getAdminToken();
+    
+    console.log('🔍 Dashboard Stats API Call:');
+    console.log('- Token available:', !!token);
+    console.log('- Token preview:', token ? token.substring(0, 20) + '...' : 'No token');
+    console.log('- API URL:', `${API_BASE_URL}/admin/dashboard/stats`);
+    
+    if (!token) {
+      console.warn('No admin token available for dashboard stats');
+      return {
+        success: false,
+        message: 'No authentication token',
+        data: getFallbackDashboardStats()
+      };
+    }
+
     const response = await fetch(`${API_BASE_URL}/admin/dashboard/stats`, {
       method: 'GET',
       headers: {
@@ -807,16 +858,50 @@ export const fetchDashboardStats = async () => {
       },
     });
 
+    console.log('📡 Dashboard API Response:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok
+    });
+
     if (!response.ok) {
-      throw new Error(`Dashboard stats fetch failed: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('❌ Dashboard API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText
+      });
+      
+      return {
+        success: false,
+        message: `API Error: ${response.status} ${response.statusText}`,
+        data: getFallbackDashboardStats()
+      };
     }
 
-    return await response.json();
+    const result = await response.json();
+    console.log('✅ Dashboard API Success:', result);
+    return result;
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);
-    throw error;
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      data: getFallbackDashboardStats()
+    };
   }
 };
+
+// Fallback dashboard stats for when API is unavailable
+const getFallbackDashboardStats = () => ({
+  totalProducts: 7,
+  totalOrders: 6,
+  totalUsers: 7,
+  totalRevenue: 135.95,
+  recentOrders: 6,
+  pendingOrders: 1,
+  averageOrderValue: 22.66
+});
 
 // Fetch all users for admin management
 export const fetchAllUsers = async () => {

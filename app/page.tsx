@@ -6,9 +6,9 @@ import Link from "next/link"
 import { Star, ShoppingCart, Heart, Award } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { fetchFeaturedProducts, fetchFeaturedTestimonials } from "@/firebase/api"
 import { useEffect, useState } from "react"
 import { Product, Testimonial, getProductImageUrl, formatPrice } from "@/types/product"
+import { fetchFeaturedProducts, fetchFeaturedTestimonials } from "@/firebase/api"
 
 export default function HomePage() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
@@ -18,7 +18,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const loadData = async () => {
-      // Load featured products
+      // Load featured products via Firebase Functions HTTP endpoint
       try {
         const productResponse = await fetchFeaturedProducts();
         

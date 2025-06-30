@@ -3,10 +3,9 @@ const admin = require('firebase-admin');
 // Initialize Firebase Admin if not already initialized
 if (!admin.apps.length) {
   const serviceAccount = require('../dreamy-delights-882ff-firebase-adminsdk-fbsvc-e3a40b9a80.json');
-  
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
-    databaseURL: "https://dreamy-delights-882ff-default-rtdb.firebaseio.com"
+    databaseURL: process.env.FIREBASE_DATABASE_URL
   });
 }
 
@@ -16,8 +15,8 @@ async function createAdminUser() {
   try {
     console.log('👤 Creating admin user...');
     
-    const adminEmail = 'admin@dreamydelights.com';
-    const adminPassword = 'admin123'; // For testing only
+    const adminEmail = process.env.ADMIN_USER_EMAIL;
+    const adminPassword = process.env.ADMIN_USER_PASSWORD; // For testing only
     
     // Create Firebase Auth user
     let adminUser;
