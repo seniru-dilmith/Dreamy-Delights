@@ -1,4 +1,6 @@
 // Direct Firebase Functions API utilities
+import { ClientEncryption } from '@/utils/encryption';
+
 // No Next.js backend - only Firebase Cloud Functions
 
 // Base URL for Firebase HTTP functions (exposed to client)
@@ -90,8 +92,7 @@ export const getAdminToken = () => {
     const encryptedToken = localStorage.getItem(ADMIN_TOKEN_KEY);
     if (!encryptedToken) return null;
 
-    // Import encryption utility dynamically to avoid SSR issues
-    const { ClientEncryption } = require('@/utils/encryption');
+    // Use imported ClientEncryption
     const tokenData = JSON.parse(ClientEncryption.decrypt(encryptedToken));
     
     // Check if token is expired
@@ -114,12 +115,8 @@ export const setAdminToken = (token: string | null) => {
   
   if (token) {
     try {
-      // Import encryption utility dynamically to avoid SSR issues
-      const { ClientEncryption } = require('@/utils/encryption');
-      const tokenData = {
-        token,
-        timestamp: Date.now(),
-      };
+      // Use imported ClientEncryption
+      const tokenData = { token, timestamp: Date.now() };
       const encryptedToken = ClientEncryption.encrypt(JSON.stringify(tokenData));
       localStorage.setItem(ADMIN_TOKEN_KEY, encryptedToken);
     } catch (error) {
@@ -684,43 +681,38 @@ export const adminUpdateProduct = async (id: string, productData: FormData) => {
 };
 
 export const adminUpdateProductJSON = async (id: string, productData: object) => {
+  console.log('🌐 adminUpdateProductJSON called with:', { id, productData });
+  const url = `${API_BASE_URL}/admin/products/${id}`;
+  // Prepare headers
+  const token = getAdminToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+  console.log('🌐 adminUpdateProductJSON headers:', headers);
+  // Execute request
+  let response: Response;
   try {
-    console.log('🌐 adminUpdateProductJSON called with:', {
-      id,
-      idType: typeof id,
-      idLength: id ? id.length : 0,
-      productData,
-      url: `${API_BASE_URL}/admin/products/${id}`
-    });
-    
-    // Validate inputs
-    if (!id || typeof id !== 'string') {
-      console.error('🌐 Invalid product ID:', { id, type: typeof id });
-      throw new Error('Invalid product ID provided');
-    }
-    
-    if (!productData || typeof productData !== 'object') {
-      console.error('🌐 Invalid product data:', { productData, type: typeof productData });
-      throw new Error('Invalid product data provided');
-    }
-    
-    const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/products/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(productData),
-    });
-    
-    const result = await response.json();
-    console.log('🌐 adminUpdateProductJSON response:', result);
-    return result;
-  } catch (error) {
-    console.error('🌐 Error updating product (JSON):', {
-      error,
-      errorMessage: error instanceof Error ? error.message : 'Unknown error',
-      id,
-      productData
-    });
-    throw error;
+    response = await fetch(url, { method: 'PUT', headers, body: JSON.stringify(productData) });
+  } catch (networkError) {
+    console.error('🌐 Network error in adminUpdateProductJSON:', networkError);
+    return { success: false, message: `Network error: ${(networkError as Error).message}` };
   }
+  // Parse JSON
+  let result: any = {};
+  try {
+    result = await response.json();
+  } catch (parseError) {
+    console.error('🌐 JSON parse error:', parseError);
+  }
+  console.log('🌐 adminUpdateProductJSON raw response:', { status: response.status, statusText: response.statusText, body: result });
+  // Handle HTTP errors
+  if (!response.ok) {
+    const message = result?.message || `HTTP ${response.status}: ${response.statusText}`;
+    console.error('🌐 adminUpdateProductJSON HTTP error:', message, result);
+    return { success: false, message, status: response.status, statusText: response.statusText, errorData: result };
+  }
+  return result;
 };
 
 export const adminDeleteProduct = async (id: string) => {

@@ -34,9 +34,9 @@ const upload = multer({
 router.post("/login", async (req, res) => {
   try {
     console.log("🔐 Admin HTTP login attempt:", req.body);
-    
+
     const {username, password} = req.body;
-    
+
     if (!username || !password) {
       return res.status(400).json({
         success: false,
@@ -47,7 +47,7 @@ router.post("/login", async (req, res) => {
     // Simple check for admin credentials (for testing)
     if (username === "admin" && password === "admin123") {
       const jwt = require("jsonwebtoken");
-      
+
       // Generate a simple JWT token for testing
       const token = jwt.sign(
           {
@@ -57,12 +57,13 @@ router.post("/login", async (req, res) => {
             permissions: ["manage_products", "manage_orders", "view_analytics"],
             type: "admin",
           },
-          process.env.JWT_SECRET || "fallback-secret-change-in-production",
+          process.env.ADMIN_JWT_SECRET ||
+            "your-super-secure-jwt-secret-change-this-in-production",
           {expiresIn: "24h"},
       );
 
       console.log("🔐 Admin login successful (test mode)");
-      
+
       res.json({
         success: true,
         token,
@@ -202,7 +203,7 @@ router.post("/products",
     (req, res, next) => {
       const contentType = req.get("Content-Type") || "";
       console.log("📋 POST /products - Content-Type:", contentType);
-      
+
       if (contentType.includes("multipart/form-data")) {
         console.log("📸 Using multer middleware for FormData");
         // Use multer for FormData with error handling
@@ -231,7 +232,7 @@ router.post("/products",
           mimetype: req.file.mimetype,
           size: req.file.size,
         } : "No file");
-        
+
         const db = admin.firestore();
         const storage = admin.storage();
         const bucket = storage.bucket();
@@ -262,11 +263,11 @@ router.post("/products",
         // Upload image if provided
         if (req.file) {
           console.log("Starting image upload...");
-          
+
           try {
             // Check if storage bucket exists first
             console.log("Checking if storage bucket exists:", bucket.name);
-            
+
             const [exists] = await bucket.exists();
             if (!exists) {
               console.log("❌ Storage bucket does not exist");
@@ -277,9 +278,9 @@ router.post("/products",
                 error: "storage_bucket_not_found",
               });
             }
-            
+
             console.log("✅ Storage bucket exists, proceeding with upload");
-            
+
             const fileName = `products/${uuidv4()}-${req.file.originalname}`;
             const file = bucket.file(fileName);
 
@@ -293,12 +294,12 @@ router.post("/products",
             // Make file publicly readable
             await file.makePublic();
             console.log("Image made public");
-            
+
             imageUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
             console.log("Image URL generated:", imageUrl);
           } catch (storageError) {
             console.error("Storage error details:", storageError);
-            
+
             if (storageError.message &&
                 storageError.message.includes("bucket does not exist")) {
               return res.status(500).json({
@@ -354,7 +355,7 @@ router.post("/products",
         });
       } catch (error) {
         console.error("Error creating product:", error);
-        
+
         // More specific error messages
         let errorMessage = "Failed to create product";
         if (error.code === "permission-denied") {
@@ -366,7 +367,7 @@ router.post("/products",
         } else if (error.message) {
           errorMessage = `Failed to create product: ${error.message}`;
         }
-        
+
         res.status(500).json({
           success: false,
           message: errorMessage,
@@ -383,9 +384,10 @@ router.put("/products/:id",
     requirePermission("manage_products"),
     // Conditional middleware based on content type with error handling
     (req, res, next) => {
+      console.log("🔄 PUT /products/:id - Starting middleware");
       const contentType = req.get("Content-Type") || "";
       console.log("📋 PUT /products/:id - Content-Type:", contentType);
-      
+
       if (contentType.includes("multipart/form-data")) {
         console.log("📸 Using multer middleware for FormData");
         // Use multer for FormData with error handling
@@ -407,6 +409,7 @@ router.put("/products/:id",
       }
     },
     async (req, res) => {
+      console.log("🔄 PUT /products/:id - Main handler started");
       try {
         console.log("🔄 Updating product - Product ID:", req.params.id);
         console.log("🔄 Updating product - Request body:", req.body);
@@ -419,13 +422,13 @@ router.put("/products/:id",
           mimetype: req.file.mimetype,
           size: req.file.size,
         } : "No file");
-        
+
         const db = admin.firestore();
         const storage = admin.storage();
         const bucket = storage.bucket();
 
         const {id} = req.params;
-        
+
         // Validate product ID
         if (!id || typeof id !== "string" || id.trim() === "") {
           console.log("❌ Invalid product ID provided:", {
@@ -438,9 +441,9 @@ router.put("/products/:id",
             message: "Invalid product ID provided",
           });
         }
-        
+
         console.log("🔍 Looking up product with ID:", id);
-        
+
         const {
           name,
           description,
@@ -468,7 +471,7 @@ router.put("/products/:id",
 
         const productRef = db.collection("products").doc(id);
         console.log("🔍 Checking if product exists:", productRef.path);
-        
+
         const productDoc = await productRef.get();
 
         if (!productDoc.exists) {
@@ -477,12 +480,12 @@ router.put("/products/:id",
             docPath: productRef.path,
             exists: productDoc.exists,
           });
-          
+
           // List all products for debugging
           const allProductsSnapshot = await db.collection("products").get();
           const existingIds = allProductsSnapshot.docs.map((doc) => doc.id);
           console.log("📋 Existing product IDs:", existingIds);
-          
+
           return res.status(404).json({
             success: false,
             message: "Product not found",
@@ -553,10 +556,13 @@ router.put("/products/:id",
           message: "Product updated successfully",
         });
       } catch (error) {
+        // Log full request body to debug update failure
+        console.error("Request body on failure:", req.body);
         console.error("Error updating product:", error);
         res.status(500).json({
           success: false,
-          message: "Failed to update product",
+          message: error.message || "Failed to update Produkt",
+          error: error.stack || String(error),
         });
       }
     });
