@@ -1,0 +1,60 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow public read access to featured products
+    match /featured_products/{document} {
+      allow read: if true;
+      allow write: if false; // Only admin can write
+    }
+    
+    // Allow read access to other public collections
+    match /categories/{document} {
+      allow read: if true;
+      allow write: if false;
+    }
+    
+    // Products collection - read access for public, write for admin only
+    match /products/{document} {
+      allow read: if true;
+      allow write: if false; // Only via Firebase Functions
+    }
+    
+    // Orders collection - users can only access their own orders
+    match /orders/{document} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+    
+    // Users collection - users can only access their own data
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Admins collection - strictly no client access
+    match /admins/{document} {
+      allow read, write: if false; // Only accessible via Firebase Functions
+    }
+    
+    // Testimonials collection - public read, admin write only
+    match /testimonials/{document} {
+      allow read: if true;
+      allow write: if false; // Only via Firebase Functions
+    }
+    
+    // Site content collections - public read, admin write only
+    match /banners/{document} {
+      allow read: if true;
+      allow write: if false; // Only via Firebase Functions
+    }
+    
+    match /about_sections/{document} {
+      allow read: if true;
+      allow write: if false; // Only via Firebase Functions
+    }
+    
+    // Default deny for other documents
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

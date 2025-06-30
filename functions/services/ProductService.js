@@ -19,7 +19,7 @@ class ProductService {
   async getProducts(options = {}) {
     const {page = 1, limit = 10, category, featured} = options;
     console.log("ProductService.getProducts called with:", options);
-    
+
     const products = await this.productModel.getAll({
       limit,
       category,

@@ -1,8 +1,11 @@
 // Direct Firebase Functions API utilities
+import { ClientEncryption } from '@/utils/encryption';
+
 // No Next.js backend - only Firebase Cloud Functions
 
-// Base URL for Firebase Functions API
-const API_BASE_URL = 'https://api-cvfhs7orea-uc.a.run.app/api';
+// Base URL for Firebase HTTP functions (exposed to client)
+// Uses public env var NEXT_PUBLIC_FUNCTIONS_URL and includes the '/api' path for HTTP endpoints
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_FUNCTIONS_URL}/api`;
 
 // Use the main API endpoint for all requests
 const FUNCTION_URLS = {
@@ -14,7 +17,7 @@ const FUNCTION_URLS = {
 };
 
 // Base URL for Firebase Functions (for callable functions)
-const FUNCTIONS_BASE_URL = 'https://us-central1-dreamy-delights-882ff.cloudfunctions.net';
+const FUNCTIONS_BASE_URL = process.env.NEXT_PUBLIC_FUNCTIONS_URL;
 
 // Helper function to get auth token (client-side only)
 const getAuthToken = async () => {
@@ -82,15 +85,14 @@ const ADMIN_TOKEN_KEY = 'dreamy_admin_token';
 const ADMIN_SESSION_DURATION = 4 * 60 * 60 * 1000; // 4 hours
 
 // Helper function to get admin auth token from localStorage
-const getAdminToken = () => {
+export const getAdminToken = () => {
   if (typeof window === 'undefined') return null;
   
   try {
     const encryptedToken = localStorage.getItem(ADMIN_TOKEN_KEY);
     if (!encryptedToken) return null;
 
-    // Import encryption utility dynamically to avoid SSR issues
-    const { ClientEncryption } = require('@/utils/encryption');
+    // Use imported ClientEncryption
     const tokenData = JSON.parse(ClientEncryption.decrypt(encryptedToken));
     
     // Check if token is expired
@@ -113,12 +115,8 @@ export const setAdminToken = (token: string | null) => {
   
   if (token) {
     try {
-      // Import encryption utility dynamically to avoid SSR issues
-      const { ClientEncryption } = require('@/utils/encryption');
-      const tokenData = {
-        token,
-        timestamp: Date.now(),
-      };
+      // Use imported ClientEncryption
+      const tokenData = { token, timestamp: Date.now() };
       const encryptedToken = ClientEncryption.encrypt(JSON.stringify(tokenData));
       localStorage.setItem(ADMIN_TOKEN_KEY, encryptedToken);
     } catch (error) {
@@ -515,17 +513,24 @@ export const adminLogin = async (credentials: {
   password: string;
 }) => {
   try {
-    const { functions } = await import('./init');
-    const { httpsCallable } = await import('firebase/functions');
-    
-    const loginFunction = httpsCallable(functions, 'adminLogin');
-    const result = await loginFunction(credentials);
-    
-    if (result.data && (result.data as any).success) {
-      setAdminToken((result.data as any).token);
+    const response = await fetch(`${API_BASE_URL}/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Login failed');
+      throw new Error(errorText);
     }
-    
-    return result.data;
+
+    const result = await response.json();
+
+    if (result.success && result.token) {
+      setAdminToken(result.token);
+    }
+
+    return result;
   } catch (error) {
     console.error('firebase/api: Error in admin login:', error);
     throw error;
@@ -585,11 +590,46 @@ export const createInitialAdmin = async (adminData: {
 // Admin CRUD Operations
 export const adminFetchProducts = async () => {
   try {
+    console.log('🛍️ Admin Products API Call:');
+    console.log('- URL:', `${API_BASE_URL}/admin/products`);
+    
+    const token = getAdminToken();
+    console.log('- Token available:', !!token);
+    console.log('- Token preview:', token ? token.substring(0, 20) + '...' : 'No token');
+    
+    if (!token) {
+      console.warn('No admin token available for products fetch');
+      return {
+        success: false,
+        message: 'No authentication token',
+        data: []
+      };
+    }
+
     const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/products`);
-    return await response.json();
+    const result = await response.json();
+    
+    console.log('📦 Admin Products API Response:', {
+      success: result.success,
+      dataCount: result.data?.length || 0,
+      message: result.message
+    });
+    
+    if (result.success && result.data) {
+      console.log('✅ Products loaded successfully:', result.data.length, 'products');
+      result.data.forEach((product: any, index: number) => {
+        console.log(`  ${index + 1}. ${product.name} (ID: ${product.id})`);
+      });
+    }
+    
+    return result;
   } catch (error) {
-    console.error('Error fetching admin products:', error);
-    throw error;
+    console.error('❌ Error fetching admin products:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      data: []
+    };
   }
 };
 
@@ -641,43 +681,38 @@ export const adminUpdateProduct = async (id: string, productData: FormData) => {
 };
 
 export const adminUpdateProductJSON = async (id: string, productData: object) => {
+  console.log('🌐 adminUpdateProductJSON called with:', { id, productData });
+  const url = `${API_BASE_URL}/admin/products/${id}`;
+  // Prepare headers
+  const token = getAdminToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+  console.log('🌐 adminUpdateProductJSON headers:', headers);
+  // Execute request
+  let response: Response;
   try {
-    console.log('🌐 adminUpdateProductJSON called with:', {
-      id,
-      idType: typeof id,
-      idLength: id ? id.length : 0,
-      productData,
-      url: `${API_BASE_URL}/admin/products/${id}`
-    });
-    
-    // Validate inputs
-    if (!id || typeof id !== 'string') {
-      console.error('🌐 Invalid product ID:', { id, type: typeof id });
-      throw new Error('Invalid product ID provided');
-    }
-    
-    if (!productData || typeof productData !== 'object') {
-      console.error('🌐 Invalid product data:', { productData, type: typeof productData });
-      throw new Error('Invalid product data provided');
-    }
-    
-    const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/products/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(productData),
-    });
-    
-    const result = await response.json();
-    console.log('🌐 adminUpdateProductJSON response:', result);
-    return result;
-  } catch (error) {
-    console.error('🌐 Error updating product (JSON):', {
-      error,
-      errorMessage: error instanceof Error ? error.message : 'Unknown error',
-      id,
-      productData
-    });
-    throw error;
+    response = await fetch(url, { method: 'PUT', headers, body: JSON.stringify(productData) });
+  } catch (networkError) {
+    console.error('🌐 Network error in adminUpdateProductJSON:', networkError);
+    return { success: false, message: `Network error: ${(networkError as Error).message}` };
   }
+  // Parse JSON
+  let result: any = {};
+  try {
+    result = await response.json();
+  } catch (parseError) {
+    console.error('🌐 JSON parse error:', parseError);
+  }
+  console.log('🌐 adminUpdateProductJSON raw response:', { status: response.status, statusText: response.statusText, body: result });
+  // Handle HTTP errors
+  if (!response.ok) {
+    const message = result?.message || `HTTP ${response.status}: ${response.statusText}`;
+    console.error('🌐 adminUpdateProductJSON HTTP error:', message, result);
+    return { success: false, message, status: response.status, statusText: response.statusText, errorData: result };
+  }
+  return result;
 };
 
 export const adminDeleteProduct = async (id: string) => {
@@ -799,6 +834,21 @@ export const adminUpdateSettings = async (key: string, settingData: any) => {
 export const fetchDashboardStats = async () => {
   try {
     const token = getAdminToken();
+    
+    console.log('🔍 Dashboard Stats API Call:');
+    console.log('- Token available:', !!token);
+    console.log('- Token preview:', token ? token.substring(0, 20) + '...' : 'No token');
+    console.log('- API URL:', `${API_BASE_URL}/admin/dashboard/stats`);
+    
+    if (!token) {
+      console.warn('No admin token available for dashboard stats');
+      return {
+        success: false,
+        message: 'No authentication token',
+        data: getFallbackDashboardStats()
+      };
+    }
+
     const response = await fetch(`${API_BASE_URL}/admin/dashboard/stats`, {
       method: 'GET',
       headers: {
@@ -807,16 +857,50 @@ export const fetchDashboardStats = async () => {
       },
     });
 
+    console.log('📡 Dashboard API Response:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok
+    });
+
     if (!response.ok) {
-      throw new Error(`Dashboard stats fetch failed: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('❌ Dashboard API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText
+      });
+      
+      return {
+        success: false,
+        message: `API Error: ${response.status} ${response.statusText}`,
+        data: getFallbackDashboardStats()
+      };
     }
 
-    return await response.json();
+    const result = await response.json();
+    console.log('✅ Dashboard API Success:', result);
+    return result;
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);
-    throw error;
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      data: getFallbackDashboardStats()
+    };
   }
 };
+
+// Fallback dashboard stats for when API is unavailable
+const getFallbackDashboardStats = () => ({
+  totalProducts: 7,
+  totalOrders: 6,
+  totalUsers: 7,
+  totalRevenue: 135.95,
+  recentOrders: 6,
+  pendingOrders: 1,
+  averageOrderValue: 22.66
+});
 
 // Fetch all users for admin management
 export const fetchAllUsers = async () => {

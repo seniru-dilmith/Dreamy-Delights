@@ -1,8 +1,8 @@
 const jwt = require("jsonwebtoken");
 const admin = require("firebase-admin");
 
-const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET ||
-    "fallback-secret-change-in-production";
+const ADMIN_JWT_SECRET =
+    "your-super-secure-jwt-secret-change-this-in-production";
 
 /**
  * Middleware to verify admin JWT token for HTTP requests
@@ -34,17 +34,17 @@ const verifyAdminToken = async (req, res, next) => {
         role: decodedFirebaseToken.role,
         adminId: decodedFirebaseToken.adminId,
       });
-      
+
       decoded = decodedFirebaseToken;
       adminId = decodedFirebaseToken.adminId || decodedFirebaseToken.uid;
-      
+
       // For Firebase tokens, set additional fields for compatibility
       decoded.id = adminId;
       decoded.username = decoded.username || "firebase-admin";
       decoded.role = decoded.role || "admin";
     } catch (firebaseError) {
       console.log("🔐 Not a Firebase token, trying JWT verification...");
-      
+
       // Fallback to JWT verification
       try {
         decoded = jwt.verify(token, ADMIN_JWT_SECRET);
@@ -65,7 +65,7 @@ const verifyAdminToken = async (req, res, next) => {
         });
       }
     }
-    
+
     if (!adminId) {
       console.error("🔐 No admin ID found in token:", decoded);
       return res.status(401).json({
@@ -79,16 +79,27 @@ const verifyAdminToken = async (req, res, next) => {
     // Skip database check for test admin tokens
     if (adminId === "test-admin-id") {
       console.log("🔐 Using test admin token - skipping database verification");
-      // Add admin info to request object for test admin
+      // Normalize permissions for test admin tokens
+      let perms = [];
+      if (decoded.permissions) {
+        perms = decoded.permissions;
+      } else {
+        perms = [
+          "manage_products",
+          "manage_orders",
+          "view_analytics",
+        ];
+      }
+      if (!Array.isArray(perms)) {
+        perms = Object.keys(perms);
+      }
       req.admin = {
         id: adminId,
         username: decoded.username || "admin",
         role: decoded.role || "super_admin",
-        permissions: decoded.permissions ||
-          ["manage_products", "manage_orders", "view_analytics"],
+        permissions: perms,
         data: {active: true, role: "super_admin"},
       };
-      
       next();
       return;
     }
@@ -106,12 +117,24 @@ const verifyAdminToken = async (req, res, next) => {
 
     // Add admin info to request object
     const adminData = adminDoc.data();
+    // Normalize permissions to an array for consistency
+    let perms;
+    if (decoded.permissions != null) {
+      perms = decoded.permissions;
+    } else if (adminData.permissions != null) {
+      perms = adminData.permissions;
+    } else {
+      perms = [];
+    }
+    if (!Array.isArray(perms)) {
+      // If permissions stored as object map, extract keys
+      perms = Object.keys(perms);
+    }
     req.admin = {
-      id: adminId, // Use the resolved admin ID
+      id: adminId,
       username: decoded.username || adminData.username,
       role: decoded.role || adminData.role,
-      permissions: decoded.permissions || adminData.permissions ||
-        ["manage_products", "manage_orders", "view_analytics"], // Defaults
+      permissions: perms,
       data: adminData,
     };
 
