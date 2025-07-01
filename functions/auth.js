@@ -1,13 +1,26 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const fetch = require("node-fetch");
 
 /**
  * Login with email and password
  */
 exports.loginWithEmail = functions.https.onCall(async (data, context) => {
-  const {email, password} = data;
+  console.log("loginWithEmail called with data:", data);
+  
+  // The data might be nested differently in 2nd gen functions
+  let actualData = data;
+  if (data.data) {
+    actualData = data.data;
+  }
+  
+  console.log("Using data:", JSON.stringify(actualData, null, 2));
+  
+  const {email, password} = actualData;
 
   if (!email || !password) {
+    console.log("Missing email or password:",
+        {email: !!email, password: !!password});
     throw new functions.https.HttpsError(
         "invalid-argument",
         "Email and password are required",
@@ -15,8 +28,14 @@ exports.loginWithEmail = functions.https.onCall(async (data, context) => {
   }
 
   try {
+    // Get Firebase API key from environment variables
+    const firebaseApiKey = process.env.FIREBASE_API_KEY ||
+                          "AIzaSyB318h5Mq0IhSzui9y96mkPJ0oaQqzwQgs";
+    
+    console.log("Using API key for authentication");
+    
     // Verify credentials using Firebase Auth REST API
-    const authUrl = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${process.env.FIREBASE_API_KEY}`;
+    const authUrl = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${firebaseApiKey}`;
     const authResponse = await fetch(authUrl, {
       method: "POST",
       headers: {
@@ -71,9 +90,25 @@ exports.loginWithEmail = functions.https.onCall(async (data, context) => {
  * Register with email and password
  */
 exports.registerWithEmail = functions.https.onCall(async (data, context) => {
-  const {email, password, displayName} = data;
+  console.log("registerWithEmail called");
+  
+  // The data might be nested differently in 2nd gen functions
+  let actualData = data;
+  if (data.data) {
+    actualData = data.data;
+  }
+  
+  console.log("Extracted data keys:", Object.keys(actualData));
+  console.log("Email:", actualData.email);
+  console.log("Password length:",
+      actualData.password ? actualData.password.length : 0);
+  console.log("DisplayName:", actualData.displayName);
+  
+  const {email, password, displayName} = actualData;
 
   if (!email || !password || !displayName) {
+    console.log("Missing required fields:",
+        {email: !!email, password: !!password, displayName: !!displayName});
     throw new functions.https.HttpsError(
         "invalid-argument",
         "Email, password, and display name are required",
@@ -121,9 +156,21 @@ exports.registerWithEmail = functions.https.onCall(async (data, context) => {
  * Login with Google OAuth
  */
 exports.loginWithGoogle = functions.https.onCall(async (data, context) => {
-  const {idToken} = data;
+  console.log("loginWithGoogle called");
+  
+  // The data might be nested differently in 2nd gen functions
+  let actualData = data;
+  if (data.data) {
+    actualData = data.data;
+  }
+  
+  console.log("Extracted data keys:", Object.keys(actualData));
+  console.log("ID Token received:", !!actualData.idToken);
+  
+  const {idToken} = actualData;
 
   if (!idToken) {
+    console.log("Missing Google ID token");
     throw new functions.https.HttpsError(
         "invalid-argument",
         "Google ID token is required",
@@ -131,15 +178,19 @@ exports.loginWithGoogle = functions.https.onCall(async (data, context) => {
   }
 
   try {
+    console.log("Verifying Google ID token...");
     // Verify the Google token
     const decodedToken = await admin.auth().verifyIdToken(idToken);
+    console.log("Token verified for user:", decodedToken.email);
 
     // Create or get user
     let userRecord;
     let isNewUser = false;
     try {
       userRecord = await admin.auth().getUser(decodedToken.uid);
+      console.log("Existing user found:", userRecord.email);
     } catch (error) {
+      console.log("Creating new user for:", decodedToken.email);
       // User doesn't exist, create them
       userRecord = await admin.auth().createUser({
         uid: decodedToken.uid,
@@ -153,18 +204,21 @@ exports.loginWithGoogle = functions.https.onCall(async (data, context) => {
 
     // Set default role for new users
     if (isNewUser) {
+      console.log("Setting role for new user");
       await admin.auth().setCustomUserClaims(userRecord.uid, {
         role: "customer",
       });
     }
 
     // Create custom token for the client
+    console.log("Creating custom token...");
     const customToken = await admin.auth().createCustomToken(userRecord.uid);
 
     // Get user role from custom claims, default to 'customer'
     const userRole = (userRecord.customClaims &&
         userRecord.customClaims.role) || "customer";
 
+    console.log("Google login successful for:", userRecord.email);
     return {
       success: true,
       user: {
@@ -181,80 +235,6 @@ exports.loginWithGoogle = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError(
         "unauthenticated",
         "Google authentication failed",
-    );
-  }
-});
-
-/**
- * Login with Facebook OAuth
- */
-exports.loginWithFacebook = functions.https.onCall(async (data, context) => {
-  const {accessToken} = data;
-
-  if (!accessToken) {
-    throw new functions.https.HttpsError(
-        "invalid-argument",
-        "Facebook access token is required",
-    );
-  }
-
-  try {
-    // Verify Facebook token by making a request to Facebook's API
-    const response = await fetch(`https://graph.facebook.com/me?access_token=${accessToken}&fields=id,name,email,picture`);
-    const facebookUser = await response.json();
-
-    if (!facebookUser.id) {
-      throw new Error("Invalid Facebook token");
-    }
-
-    // Create or get user
-    let userRecord;
-    let isNewUser = false;
-    try {
-      // Try to find user by email
-      userRecord = await admin.auth().getUserByEmail(facebookUser.email);
-    } catch (error) {
-      // User doesn't exist, create them
-      userRecord = await admin.auth().createUser({
-        email: facebookUser.email,
-        displayName: facebookUser.name,
-        photoURL: facebookUser.picture && facebookUser.picture.data ?
-            facebookUser.picture.data.url : null,
-        emailVerified: true,
-      });
-      isNewUser = true;
-    }
-
-    // Set default role for new users
-    if (isNewUser) {
-      await admin.auth().setCustomUserClaims(userRecord.uid, {
-        role: "customer",
-      });
-    }
-
-    // Create custom token for the client
-    const customToken = await admin.auth().createCustomToken(userRecord.uid);
-
-    // Get user role from custom claims, default to 'customer'
-    const userRole = (userRecord.customClaims &&
-        userRecord.customClaims.role) || "customer";
-
-    return {
-      success: true,
-      user: {
-        uid: userRecord.uid,
-        email: userRecord.email,
-        displayName: userRecord.displayName,
-        photoURL: userRecord.photoURL,
-        role: userRole,
-      },
-      customToken,
-    };
-  } catch (error) {
-    console.error("Facebook login error:", error);
-    throw new functions.https.HttpsError(
-        "unauthenticated",
-        "Facebook authentication failed",
     );
   }
 });

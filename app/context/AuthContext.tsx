@@ -16,7 +16,7 @@ interface AuthContextType {
   user: User | null
   login: (email: string, password: string) => Promise<boolean>
   loginWithGoogle: () => Promise<boolean>
-  loginWithFacebook: () => Promise<boolean>
+  renderGoogleButton: (element: HTMLElement) => Promise<void>
   register: (name: string, email: string, password: string) => Promise<boolean>
   logout: () => Promise<void>
   loading: boolean
@@ -99,26 +99,121 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const loginWithGoogle = async (): Promise<boolean> => {
-    try {
-      // In a real implementation, you would get the Google ID token from Google Sign-In
-      // For now, this is a placeholder
-      console.log("Google login would be implemented here")
-      return false
-    } catch (error) {
-      console.error("Google login error:", error)
+    if (!auth) {
+      console.error("Firebase not available")
       return false
     }
-  }
-
-  const loginWithFacebook = async (): Promise<boolean> => {
+    
     try {
-      // In a real implementation, you would get the Facebook access token
-      // For now, this is a placeholder
-      console.log("Facebook login would be implemented here")
-      return false
+      // Check if Google OAuth is configured
+      const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+      console.log("Google Client ID available:", !!googleClientId);
+      
+      if (!googleClientId || googleClientId.includes('your-')) {
+        console.error("Google Client ID not configured properly");
+        alert(`Google Sign-In setup required:
+
+1. Go to Google Cloud Console
+2. Create OAuth 2.0 credentials
+3. Add your domain to authorized origins
+4. Update NEXT_PUBLIC_GOOGLE_CLIENT_ID in .env.local
+
+For now, please use email/password authentication.`);
+        return false;
+      }
+
+      console.log("Starting Google Sign-In process...");
+
+      // Load Google Identity Services script if not already loaded
+      if (typeof window !== 'undefined' && !window.google) {
+        console.log("Loading Google Identity Services script...");
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://accounts.google.com/gsi/client';
+          script.async = true;
+          script.defer = true;
+          script.onload = () => {
+            console.log("Google Identity Services script loaded");
+            resolve();
+          };
+          script.onerror = (error) => {
+            console.error("Failed to load Google Identity Services script:", error);
+            reject(new Error('Failed to load Google Sign-In'));
+          };
+          document.head.appendChild(script);
+        });
+      }
+
+      // Wait a bit for the script to initialize
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Initialize and perform Google Sign-In
+      return new Promise<boolean>((resolve) => {
+        if (typeof window === 'undefined' || !window.google || !window.google.accounts) {
+          console.error("Google Identity Services not properly initialized");
+          alert("Google Sign-In is not available. Please try again or use email/password authentication.");
+          resolve(false);
+          return;
+        }
+
+        console.log("Initializing Google Sign-In...");
+        
+        try {
+          window.google.accounts.id.initialize({
+            client_id: googleClientId,
+            callback: async (response: { credential: string }) => {
+              try {
+                console.log("Google Sign-In callback triggered");
+                console.log("Credential received:", !!response.credential);
+                
+                // Send the ID token to our Firebase function
+                console.log("Calling Firebase function...");
+                const result = await authFunctions.loginWithGoogle({ idToken: response.credential });
+                const data = result.data as any;
+                
+                console.log("Firebase function response:", data);
+                
+                if (data.success && data.customToken) {
+                  console.log("Signing in with custom token...");
+                  // Sign in with custom token
+                  await signInWithCustomToken(auth, data.customToken);
+                  console.log("Google Sign-In successful!");
+                  resolve(true);
+                } else {
+                  console.error("Firebase function did not return success:", data);
+                  alert("Google Sign-In failed on server. Please try again or use email/password authentication.");
+                  resolve(false);
+                }
+              } catch (error) {
+                console.error("Google login callback error:", error);
+                alert("Google Sign-In failed. Please try again or use email/password authentication.");
+                resolve(false);
+              }
+            },
+            auto_select: false,
+            cancel_on_tap_outside: true
+          });
+
+          // Try One Tap first
+          console.log("Attempting Google One Tap...");
+          window.google.accounts.id.prompt((notification: any) => {
+            console.log("One Tap notification:", notification);
+            if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+              console.log("One Tap not displayed, user can try the Google button");
+              alert("Google One Tap is not available. Please click the 'Continue with Google' button to sign in.");
+              resolve(false);
+            }
+          });
+        } catch (initError) {
+          console.error("Error initializing Google Sign-In:", initError);
+          alert("Failed to initialize Google Sign-In. Please try again or use email/password authentication.");
+          resolve(false);
+        }
+      });
     } catch (error) {
-      console.error("Facebook login error:", error)
-      return false
+      console.error("Google login error:", error);
+      alert("Google Sign-In is not available. Please use email/password authentication.");
+      return false;
     }
   }
 
@@ -167,13 +262,91 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const renderGoogleButton = async (element: HTMLElement): Promise<void> => {
+    if (!auth) {
+      console.error("Firebase not available")
+      return
+    }
+    
+    try {
+      const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+      if (!googleClientId || googleClientId.includes('your-')) {
+        console.error("Google Client ID not configured for button rendering");
+        return
+      }
+
+      console.log("Rendering Google Sign-In button...");
+
+      // Load Google Identity Services script if not already loaded
+      if (typeof window !== 'undefined' && !window.google) {
+        await new Promise<void>((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://accounts.google.com/gsi/client';
+          script.async = true;
+          script.defer = true;
+          script.onload = () => {
+            console.log("Google script loaded for button");
+            resolve();
+          };
+          script.onerror = (error) => {
+            console.error("Failed to load Google script for button:", error);
+            reject(new Error('Failed to load Google Sign-In'));
+          };
+          document.head.appendChild(script);
+        });
+      }
+
+      // Wait for initialization
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      if (typeof window !== 'undefined' && window.google && window.google.accounts) {
+        window.google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: async (response: { credential: string }) => {
+            try {
+              console.log("Google button callback triggered");
+              console.log("Button credential received:", !!response.credential);
+              
+              const result = await authFunctions.loginWithGoogle({ idToken: response.credential });
+              const data = result.data as any;
+              
+              console.log("Button Firebase function response:", data);
+              
+              if (data.success && data.customToken) {
+                await signInWithCustomToken(auth, data.customToken);
+                console.log("Google button Sign-In successful!");
+              } else {
+                console.error("Google button sign-in failed:", data);
+                alert("Google Sign-In failed. Please try again or use email/password authentication.");
+              }
+            } catch (error) {
+              console.error("Google button callback error:", error);
+              alert("Google Sign-In failed. Please try again or use email/password authentication.");
+            }
+          }
+        });
+
+        window.google.accounts.id.renderButton(element, {
+          theme: "outline",
+          size: "large"
+        } as any);
+        
+        console.log("Google button rendered successfully");
+      } else {
+        console.error("Google accounts not available for button rendering");
+      }
+    } catch (error) {
+      console.error("Error rendering Google button:", error);
+    }
+  }
+
   return (
     <AuthContext.Provider 
       value={{ 
         user, 
         login, 
         loginWithGoogle, 
-        loginWithFacebook, 
+        renderGoogleButton,
         register, 
         logout, 
         loading, 
