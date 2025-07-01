@@ -174,7 +174,7 @@ export default function MenuPage() {
                     </div>
                     <p className="text-gray-600 mb-4">{product.description}</p>
                     <div className="flex items-center justify-between">
-                      <span className="text-2xl font-bold text-pink-600">${product.price}</span>
+                      <span className="text-2xl font-bold text-pink-600">Rs. {product.price}</span>
                       <div className="flex gap-2">
                         <Button variant="outline" size="sm" onClick={() => setSelectedProduct(product)}>
                           Customize
