@@ -78,7 +78,7 @@ export default function Navbar() {
             </Link>
 
             {/* User Account */}
-            {/* {user ? (
+            {user ? (
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-gray-700">Hi, {user.name}</span>
                 <Button variant="outline" size="sm" onClick={() => logout()}>
@@ -92,7 +92,7 @@ export default function Navbar() {
                   Login
                 </Button>
               </Link>
-            )} */}
+            )}
 
             {/* Mobile menu button */}
             <button

@@ -7,7 +7,11 @@ const apiRouter = require("./routes");
 // Initialize Firebase Admin SDK with explicit bucket name
 console.log("Initializing Firebase Admin SDK with storage bucket");
 
+const serviceAccount = require(
+    "./dreamy-delights-882ff-firebase-adminsdk-fbsvc-e3a40b9a80.json");
+
 admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
   storageBucket: "dreamy-delights-882ff.firebasestorage.app",
 });
 
@@ -40,3 +44,13 @@ app.use("/api", apiRouter);
 
 // Export a single HTTP function
 exports.api = functions.https.onRequest(app);
+
+// Export authentication functions
+const authFunctions = require("./auth");
+exports.loginWithEmail = authFunctions.loginWithEmail;
+exports.loginWithGoogle = authFunctions.loginWithGoogle;
+exports.registerWithEmail = authFunctions.registerWithEmail;
+exports.logout = authFunctions.logout;
+exports.getCurrentUser = authFunctions.getCurrentUser;
+exports.refreshToken = authFunctions.refreshToken;
+exports.setUserRole = authFunctions.setUserRole;
