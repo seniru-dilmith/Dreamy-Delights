@@ -75,7 +75,6 @@ if (isValidConfig) {
 export const authFunctions = {
   loginWithEmail: functions ? httpsCallable(functions, 'loginWithEmail') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
   loginWithGoogle: functions ? httpsCallable(functions, 'loginWithGoogle') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
-  loginWithFacebook: functions ? httpsCallable(functions, 'loginWithFacebook') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
   registerWithEmail: functions ? httpsCallable(functions, 'registerWithEmail') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
   logout: functions ? httpsCallable(functions, 'logout') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),
   getCurrentUser: functions ? httpsCallable(functions, 'getCurrentUser') : () => Promise.reject(new Error('Firebase Functions not available: Please ensure your Firebase project is properly configured')),

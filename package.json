@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@emotion/is-prop-valid": "latest",
+    "@google-cloud/firestore": "^7.11.2",
     "@hookform/resolvers": "^3.9.1",
     "@radix-ui/react-accordion": "1.2.2",
     "@radix-ui/react-alert-dialog": "1.1.4",
@@ -69,6 +70,7 @@
     "form-data": "^4.0.3",
     "formdata-node": "^6.0.3",
     "framer-motion": "latest",
+    "google-auth-library": "^10.1.0",
     "input-otp": "1.4.1",
     "lucide-react": "^0.454.0",
     "multer": "^2.0.1",
