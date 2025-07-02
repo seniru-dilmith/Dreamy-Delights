@@ -5,7 +5,7 @@ import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Eye, EyeOff, Mail, Lock, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -35,6 +35,10 @@ export default function RegisterPage() {
 
   const { register, loginWithGoogle, renderGoogleButton } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  
+  // Get redirect path from URL parameters
+  const redirectPath = searchParams.get('redirect') || '/'
 
   // Initialize Google button
   useEffect(() => {
@@ -57,7 +61,7 @@ export default function RegisterPage() {
     try {
       const success = await register(name, email, password)
       if (success) {
-        router.push("/")
+        router.push(redirectPath)
       } else {
         setError("Registration failed. Please try again.")
       }
@@ -74,7 +78,7 @@ export default function RegisterPage() {
     try {
       const success = await loginWithGoogle()
       if (success) {
-        router.push("/")
+        router.push(redirectPath)
       } else {
         setError("Google registration failed. Please try again.")
       }
