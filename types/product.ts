@@ -78,8 +78,8 @@ export const isProductAvailable = (product: Product): boolean => {
 
 // Helper function to format price
 export const formatPrice = (price: number): string => {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('en-LK', {
     style: 'currency',
-    currency: 'USD'
+    currency: 'LKR',
   }).format(price);
 };
