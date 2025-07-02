@@ -194,16 +194,47 @@ For now, please use email/password authentication.`);
             cancel_on_tap_outside: true
           });
 
-          // Try One Tap first
+          // Try One Tap first with error handling
           console.log("Attempting Google One Tap...");
-          window.google.accounts.id.prompt((notification: any) => {
-            console.log("One Tap notification:", notification);
-            if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-              console.log("One Tap not displayed, user can try the Google button");
-              alert("Google One Tap is not available. Please click the 'Continue with Google' button to sign in.");
-              resolve(false);
-            }
-          });
+          try {
+            window.google.accounts.id.prompt((notification: any) => {
+              console.log("One Tap notification:", notification);
+              if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                console.log("One Tap not displayed, user can try the Google button");
+                alert(`Google Sign-In Configuration Issue:
+
+One Tap is not available. This is likely because:
+1. The domain localhost:3000 is not configured in Google Cloud Console
+2. You need to add authorized JavaScript origins
+
+To fix this:
+1. Go to Google Cloud Console
+2. Navigate to APIs & Services > Credentials  
+3. Edit OAuth 2.0 Client ID: 408108296000-m3j6qfungr6hu0tibuu77v4lf1po4i4e
+4. Add http://localhost:3000 to Authorized JavaScript origins
+5. Save the changes
+
+For now, please use email/password authentication.`);
+                resolve(false);
+              }
+            });
+          } catch (promptError) {
+            console.error("Google One Tap prompt error:", promptError);
+            alert(`Google Sign-In Configuration Error:
+
+The Google OAuth configuration has an issue, likely a domain mismatch.
+
+To fix this:
+1. Go to Google Cloud Console
+2. Navigate to APIs & Services > Credentials  
+3. Edit OAuth 2.0 Client ID: 408108296000-m3j6qfungr6hu0tibuu77v4lf1po4i4e
+4. Add http://localhost:3000 to Authorized JavaScript origins
+5. Add http://localhost:3000 to Authorized redirect URIs
+6. Save the changes
+
+For now, please use email/password authentication.`);
+            resolve(false);
+          }
         } catch (initError) {
           console.error("Error initializing Google Sign-In:", initError);
           alert("Failed to initialize Google Sign-In. Please try again or use email/password authentication.");

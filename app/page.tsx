@@ -298,7 +298,7 @@ export default function HomePage() {
             >
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Our Sweet Story</h2>
               <p className="text-base md:text-lg text-gray-700 mb-6">
-                For over 15 years, Dreamy Delights has been crafting the finest cakes and cupcakes with love, passion,
+                Dreamy Delights has been crafting the finest cakes and cupcakes with love, passion,
                 and the highest quality ingredients. Every creation tells a story of dedication to the art of baking.
               </p>
               <div className="flex items-center justify-between sm:justify-start sm:space-x-8 mb-6">
