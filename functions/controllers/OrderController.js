@@ -56,7 +56,14 @@ class OrderController {
   async createOrder(req, res) {
     try {
       const userId = req.user.uid; // Set by auth middleware
-      const {items, totalAmount, shippingAddress} = req.body;
+      const {
+        items,
+        totalAmount,
+        shippingAddress,
+        contactPhone,
+        additionalNotes,
+        customerInfo,
+      } = req.body;
 
       // Validate required fields
       if (!items || !Array.isArray(items) || items.length === 0) {
@@ -71,6 +78,9 @@ class OrderController {
         items,
         totalAmount,
         shippingAddress,
+        contactPhone,
+        additionalNotes,
+        customerInfo,
       };
 
       const result = await this.orderService.createOrder(orderData);

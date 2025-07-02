@@ -2,16 +2,17 @@
 
 import type React from "react"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, Suspense } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Mail, Lock, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "../../context/AuthContext"
+import AuthRedirectHandler from "../components/AuthRedirectHandler"
 
 // SVG Icon for Google
 const GoogleIcon = () => (
@@ -31,14 +32,88 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [redirectPath, setRedirectPath] = useState("/")
   const googleButtonRef = useRef<HTMLDivElement>(null)
 
-  const { register, loginWithGoogle, renderGoogleButton } = useAuth()
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  
-  // Get redirect path from URL parameters
-  const redirectPath = searchParams.get('redirect') || '/'
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen pt-20 pb-16 flex items-center justify-center bg-gradient-to-br from-pink-50 to-purple-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-pink-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <AuthRedirectHandler onRedirectPath={setRedirectPath}>
+        {({ router, auth }) => (
+          <RegisterForm
+            name={name}
+            setName={setName}
+            email={email}
+            setEmail={setEmail}
+            password={password}
+            setPassword={setPassword}
+            confirmPassword={confirmPassword}
+            setConfirmPassword={setConfirmPassword}
+            showPassword={showPassword}
+            setShowPassword={setShowPassword}
+            loading={loading}
+            setLoading={setLoading}
+            error={error}
+            setError={setError}
+            router={router}
+            auth={auth}
+            redirectPath={redirectPath}
+            googleButtonRef={googleButtonRef}
+          />
+        )}
+      </AuthRedirectHandler>
+    </Suspense>
+  )
+}
+
+interface RegisterFormProps {
+  name: string
+  setName: (name: string) => void
+  email: string
+  setEmail: (email: string) => void
+  password: string
+  setPassword: (password: string) => void
+  confirmPassword: string
+  setConfirmPassword: (password: string) => void
+  showPassword: boolean
+  setShowPassword: (show: boolean) => void
+  loading: boolean
+  setLoading: (loading: boolean) => void
+  error: string
+  setError: (error: string) => void
+  router: ReturnType<typeof useRouter>
+  auth: ReturnType<typeof useAuth>
+  redirectPath: string
+  googleButtonRef: React.RefObject<HTMLDivElement | null>
+}
+
+function RegisterForm({
+  name,
+  setName,
+  email,
+  setEmail,
+  password,
+  setPassword,
+  confirmPassword,
+  setConfirmPassword,
+  showPassword,
+  setShowPassword,
+  loading,
+  setLoading,
+  error,
+  setError,
+  router,
+  auth,
+  redirectPath,
+  googleButtonRef
+}: RegisterFormProps) {
+  const { register, loginWithGoogle, renderGoogleButton } = auth
 
   // Initialize Google button
   useEffect(() => {
