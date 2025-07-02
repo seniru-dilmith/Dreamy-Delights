@@ -40,10 +40,13 @@ export default function CheckoutPage() {
   })
 
   useEffect(() => {
+    // Redirect to cart if no items or not authenticated
     if (cartItems.length === 0 && !orderSuccess) {
       router.push("/cart")
+    } else if (!user && !orderSuccess) {
+      router.push("/auth/login?redirect=" + encodeURIComponent("/checkout"))
     }
-  }, [cartItems, router, orderSuccess])
+  }, [cartItems, user, router, orderSuccess])
 
   useEffect(() => {
     // Pre-fill form with user data if available

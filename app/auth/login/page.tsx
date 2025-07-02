@@ -5,7 +5,7 @@ import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Eye, EyeOff, Mail, Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -33,6 +33,10 @@ export default function LoginPage() {
 
   const { login, loginWithGoogle, renderGoogleButton } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  
+  // Get redirect path from URL parameters
+  const redirectPath = searchParams.get('redirect') || '/'
 
   // Initialize Google button
   useEffect(() => {
@@ -49,7 +53,7 @@ export default function LoginPage() {
     try {
       const success = await login(email, password)
       if (success) {
-        router.push("/")
+        router.push(redirectPath)
       } else {
         setError("Invalid email or password")
       }
@@ -66,7 +70,7 @@ export default function LoginPage() {
     try {
       const success = await loginWithGoogle()
       if (success) {
-        router.push("/")
+        router.push(redirectPath)
       } else {
         setError("Google login failed. Please try again.")
       }
@@ -150,20 +154,9 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <div className="mt-6 grid grid-cols-1 gap-3">
+              <div className="flex justify-center mt-4">
                 {/* Google Identity Services button will be rendered here */}
-                <div ref={googleButtonRef} className="w-full"></div>
-                
-                {/* Fallback manual Google button */}
-                <Button
-                  variant="outline"
-                  onClick={handleGoogleLogin}
-                  disabled={loading}
-                  className="w-full"
-                >
-                  <GoogleIcon />
-                  Continue with Google (Manual)
-                </Button>
+                <div ref={googleButtonRef}/>
               </div>
             </div>
 
