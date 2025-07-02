@@ -8,18 +8,22 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { adminFetchUsers } from "@/firebase/api";
+import { adminFetchUsers, adminUpdateUserStatus, adminUpdateUserRole } from "@/firebase/api";
 
 interface User {
   id: string;
   name: string;
   email: string;
-  role: "customer" | "admin" | "editor";
-  status: "active" | "suspended" | "banned";
+  role: "customer" | "admin" | "editor" | "vip_customer" | string;
+  status: "active" | "banned" | string;
   joinDate: string;
   lastLogin: string;
   totalOrders: number;
   totalSpent: number;
+  emailVerified?: boolean;
+  providerId?: string[];
+  photoURL?: string;
+  phoneNumber?: string;
 }
 
 export default function UserManagement() {
@@ -50,44 +54,59 @@ export default function UserManagement() {
     }
   };
 
-  const updateUserStatus = async (userId: string, newStatus: User["status"]) => {
+  const updateUserStatus = async (userId: string, newStatus: string) => {
     try {
+      // Optimistically update the UI
       setUsers(prev => prev.map(user => 
         user.id === userId 
           ? { ...user, status: newStatus }
           : user
       ));
       
-      // Here you would make an API call to update the user status
-      console.log(`User ${userId} status updated to ${newStatus}`);
+      // Make API call to update user status
+      const response = await adminUpdateUserStatus(userId, newStatus);
+      if (!response.success) {
+        // Revert if failed
+        loadUsers();
+        console.error("Failed to update user status:", response.message);
+      }
     } catch (error) {
       console.error("Error updating user status:", error);
+      // Revert on error
+      loadUsers();
     }
   };
 
-  const updateUserRole = async (userId: string, newRole: User["role"]) => {
+  const updateUserRole = async (userId: string, newRole: string) => {
     try {
+      // Optimistically update the UI
       setUsers(prev => prev.map(user => 
         user.id === userId 
           ? { ...user, role: newRole }
           : user
       ));
       
-      // Here you would make an API call to update the user role
-      console.log(`User ${userId} role updated to ${newRole}`);
+      // Make API call to update user role
+      const response = await adminUpdateUserRole(userId, newRole);
+      if (!response.success) {
+        // Revert if failed
+        loadUsers();
+        console.error("Failed to update user role:", response.message);
+      }
     } catch (error) {
       console.error("Error updating user role:", error);
+      // Revert on error
+      loadUsers();
     }
   };
 
-  const getStatusBadge = (status: User["status"]) => {
-    const statusConfig = {
+  const getStatusBadge = (status: string) => {
+    const statusConfig: Record<string, { label: string; color: string }> = {
       active: { label: "Active", color: "bg-green-100 text-green-800" },
-      suspended: { label: "Suspended", color: "bg-yellow-100 text-yellow-800" },
       banned: { label: "Banned", color: "bg-red-100 text-red-800" },
     };
 
-    const config = statusConfig[status];
+    const config = statusConfig[status] || { label: status || "Unknown", color: "bg-gray-100 text-gray-800" };
     return (
       <Badge className={config.color}>
         {config.label}
@@ -95,14 +114,15 @@ export default function UserManagement() {
     );
   };
 
-  const getRoleBadge = (role: User["role"]) => {
-    const roleConfig = {
+  const getRoleBadge = (role: string) => {
+    const roleConfig: Record<string, { label: string; color: string }> = {
       customer: { label: "Customer", color: "bg-blue-100 text-blue-800" },
       admin: { label: "Admin", color: "bg-purple-100 text-purple-800" },
       editor: { label: "Editor", color: "bg-orange-100 text-orange-800" },
+      vip_customer: { label: "VIP Customer", color: "bg-yellow-100 text-yellow-800" },
     };
 
-    const config = roleConfig[role];
+    const config = roleConfig[role] || { label: role || "Unknown", color: "bg-gray-100 text-gray-800" };
     return (
       <Badge className={config.color}>
         {config.label}
@@ -117,13 +137,21 @@ export default function UserManagement() {
   });
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    if (!dateString) return "Never";
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "Invalid Date";
+      
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return "Invalid Date";
+    }
   };
 
   // Calculate user statistics
@@ -213,7 +241,6 @@ export default function UserManagement() {
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="suspended">Suspended</SelectItem>
                   <SelectItem value="banned">Banned</SelectItem>
                 </SelectContent>
               </Select>
@@ -265,7 +292,6 @@ export default function UserManagement() {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="active">Active</SelectItem>
-                              <SelectItem value="suspended">Suspended</SelectItem>
                               <SelectItem value="banned">Banned</SelectItem>
                             </SelectContent>
                           </Select>
