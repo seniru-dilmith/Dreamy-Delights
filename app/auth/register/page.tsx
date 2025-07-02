@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -31,9 +31,17 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const googleButtonRef = useRef<HTMLDivElement>(null)
 
-  const { register, loginWithGoogle } = useAuth()
+  const { register, loginWithGoogle, renderGoogleButton } = useAuth()
   const router = useRouter()
+
+  // Initialize Google button
+  useEffect(() => {
+    if (googleButtonRef.current) {
+      renderGoogleButton(googleButtonRef.current);
+    }
+  }, [renderGoogleButton]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -183,6 +191,10 @@ export default function RegisterPage() {
               </div>
 
               <div className="mt-6 grid grid-cols-1 gap-3">
+                {/* Google Identity Services button will be rendered here */}
+                <div ref={googleButtonRef} className="w-full"></div>
+                
+                {/* Fallback manual Google button */}
                 <Button
                   variant="outline"
                   onClick={handleGoogleLogin}
@@ -190,7 +202,7 @@ export default function RegisterPage() {
                   className="w-full"
                 >
                   <GoogleIcon />
-                  Sign up with Google
+                  Sign up with Google (Manual)
                 </Button>
               </div>
             </div>

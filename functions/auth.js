@@ -7,15 +7,15 @@ const fetch = require("node-fetch");
  */
 exports.loginWithEmail = functions.https.onCall(async (data, context) => {
   console.log("loginWithEmail called with data:", data);
-  
+
   // The data might be nested differently in 2nd gen functions
   let actualData = data;
   if (data.data) {
     actualData = data.data;
   }
-  
+
   console.log("Using data:", JSON.stringify(actualData, null, 2));
-  
+
   const {email, password} = actualData;
 
   if (!email || !password) {
@@ -31,9 +31,9 @@ exports.loginWithEmail = functions.https.onCall(async (data, context) => {
     // Get Firebase API key from environment variables
     const firebaseApiKey = process.env.FIREBASE_API_KEY ||
                           "REDACTED_API_KEY";
-    
+
     console.log("Using API key for authentication");
-    
+
     // Verify credentials using Firebase Auth REST API
     const authUrl = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${firebaseApiKey}`;
     const authResponse = await fetch(authUrl, {
@@ -91,19 +91,19 @@ exports.loginWithEmail = functions.https.onCall(async (data, context) => {
  */
 exports.registerWithEmail = functions.https.onCall(async (data, context) => {
   console.log("registerWithEmail called");
-  
+
   // The data might be nested differently in 2nd gen functions
   let actualData = data;
   if (data.data) {
     actualData = data.data;
   }
-  
+
   console.log("Extracted data keys:", Object.keys(actualData));
   console.log("Email:", actualData.email);
   console.log("Password length:",
       actualData.password ? actualData.password.length : 0);
   console.log("DisplayName:", actualData.displayName);
-  
+
   const {email, password, displayName} = actualData;
 
   if (!email || !password || !displayName) {
@@ -157,16 +157,16 @@ exports.registerWithEmail = functions.https.onCall(async (data, context) => {
  */
 exports.loginWithGoogle = functions.https.onCall(async (data, context) => {
   console.log("loginWithGoogle called");
-  
+
   // The data might be nested differently in 2nd gen functions
   let actualData = data;
   if (data.data) {
     actualData = data.data;
   }
-  
+
   console.log("Extracted data keys:", Object.keys(actualData));
   console.log("ID Token received:", !!actualData.idToken);
-  
+
   const {idToken} = actualData;
 
   if (!idToken) {
@@ -179,9 +179,48 @@ exports.loginWithGoogle = functions.https.onCall(async (data, context) => {
 
   try {
     console.log("Verifying Google ID token...");
-    // Verify the Google token
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
-    console.log("Token verified for user:", decodedToken.email);
+
+    // Use Firebase Auth to verify the Google token
+    // First try to get the user by the Google token
+    let decodedToken;
+    try {
+      // Try to decode as Firebase token first (in case it's already Firebase)
+      decodedToken = await admin.auth().verifyIdToken(idToken);
+      console.log("Token verified as Firebase token for user:",
+          decodedToken.email);
+    } catch (firebaseError) {
+      console.log("Not a Firebase token, treating as Google ID token");
+
+      // If it's not a Firebase token, we need to verify it as a Google token
+      // For now, let's extract the user info from the Google token manually
+      const {OAuth2Client} = require("google-auth-library");
+      const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+      try {
+        const ticket = await client.verifyIdToken({
+          idToken: idToken,
+          audience: process.env.GOOGLE_CLIENT_ID,
+        });
+
+        const payload = ticket.getPayload();
+        console.log("Google token verified for user:", payload.email);
+
+        // Create a decoded token object similar to Firebase format
+        decodedToken = {
+          uid: payload.sub, // Google user ID
+          email: payload.email,
+          name: payload.name,
+          picture: payload.picture,
+          email_verified: payload.email_verified,
+        };
+      } catch (googleError) {
+        console.error("Failed to verify Google token:", googleError);
+        throw new functions.https.HttpsError(
+            "unauthenticated",
+            "Invalid Google ID token",
+        );
+      }
+    }
 
     // Create or get user
     let userRecord;
