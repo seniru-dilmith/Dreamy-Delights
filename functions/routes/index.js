@@ -5,6 +5,7 @@ const ordersRouter = require("./orders");
 const usersRouter = require("./users");
 const testimonialsRouter = require("./testimonials");
 const adminRouter = require("./admin");
+const cartRouter = require("./cart");
 
 /**
  * Main API Router - Combines all route modules with CORS
@@ -26,6 +27,7 @@ router.use("/orders", ordersRouter);
 router.use("/users", usersRouter);
 router.use("/testimonials", testimonialsRouter);
 router.use("/admin", adminRouter);
+router.use("/cart", cartRouter);
 
 // Health check endpoint
 router.get("/health", (req, res) => {
