@@ -781,6 +781,32 @@ export const adminFetchUsers = async () => {
   }
 };
 
+export const adminUpdateUserStatus = async (userId: string, status: string) => {
+  try {
+    const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/users/${userId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating user status:', error);
+    throw error;
+  }
+};
+
+export const adminUpdateUserRole = async (userId: string, role: string) => {
+  try {
+    const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/users/${userId}/role`, {
+      method: 'PATCH',
+      body: JSON.stringify({ role }),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating user role:', error);
+    throw error;
+  }
+};
+
 export const adminFetchContent = async () => {
   try {
     const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/content`);
