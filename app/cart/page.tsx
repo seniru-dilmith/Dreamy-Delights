@@ -190,7 +190,7 @@ export default function CartPage() {
                     </div>
                     <div className="flex justify-between">
                       <span>Delivery</span>
-                      <span>Rs. 5.00</span>
+                      <span>Rs. 500.00</span>
                     </div>
                     <div className="border-t pt-2">
                       <div className="flex justify-between font-semibold text-lg">
@@ -229,7 +229,7 @@ export default function CartPage() {
                   )}
 
                   <div className="mt-4 text-center text-sm text-gray-600">
-                    <p>Free delivery on orders over $50</p>
+                    <p>Free delivery on orders over Rs. 7000</p>
                   </div>
                 </CardContent>
               </Card>

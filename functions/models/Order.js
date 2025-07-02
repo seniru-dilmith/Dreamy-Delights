@@ -78,20 +78,48 @@ class OrderModel {
   }
 
   /**
-   * Create a new order
+   * Generate a new order ID in format order-XXXXX
+   * @return {Promise<string>} Generated order ID
+   */
+  async generateOrderId() {
+    // Get the next order number by checking existing orders
+    const snapshot = await this.collection
+        .orderBy("orderNumber", "desc")
+        .limit(1)
+        .get();
+
+    let nextOrderNumber = 1;
+    if (!snapshot.empty) {
+      const lastOrder = snapshot.docs[0].data();
+      nextOrderNumber = (lastOrder.orderNumber || 0) + 1;
+    }
+
+    // Format as 5-digit number with leading zeros
+    const orderNumber = nextOrderNumber.toString().padStart(5, "0");
+    return `order-${orderNumber}`;
+  }
+
+  /**
+   * Create a new order with custom ID format
    * @param {Object} orderData - Order data including userId
    * @return {Promise<Object>} Result with order ID
    */
   async create(orderData) {
+    const orderId = await this.generateOrderId();
+    const orderNumber = parseInt(orderId.split("-")[1]);
+
     const data = {
       ...orderData,
+      orderId: orderId,
+      orderNumber: orderNumber,
       status: "pending",
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
-    const docRef = await this.collection.add(data);
-    return {id: docRef.id};
+    // Use the custom order ID as the document ID
+    await this.collection.doc(orderId).set(data);
+    return {id: orderId, orderId: orderId};
   }
 
   /**

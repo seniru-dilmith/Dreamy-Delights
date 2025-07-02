@@ -267,9 +267,18 @@ export const createOrder = async (orderData: {
     zipCode: string;
     phone: string;
   };
+  contactPhone?: string;
+  additionalNotes?: string;
+  customerInfo?: {
+    email: string;
+    name: string;
+  };
 }) => {
   try {
-    return await callFunction('createOrder', orderData);
+    return await fetchWithAuth(`${API_BASE_URL}/orders`, {
+      method: 'POST',
+      body: JSON.stringify(orderData),
+    });
   } catch (error) {
     console.error('Error creating order:', error);
     throw error;

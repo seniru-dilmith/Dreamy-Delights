@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { useRouter } from "next/navigation"
-import { CreditCard, MapPin, User, CheckCircle } from "lucide-react"
+import { MapPin, User, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { useCart } from "../context/CartContext"
 import { useAuth } from "../context/AuthContext"
 import { createOrder } from "@/firebase/api"
+import CheckoutConfirmationModal from "../components/CheckoutConfirmationModal"
 
 export default function CheckoutPage() {
   const { cartItems, total, clearCart } = useCart()
@@ -19,6 +20,8 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [orderSuccess, setOrderSuccess] = useState(false)
   const [orderId, setOrderId] = useState("")
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false)
+  const [error, setError] = useState("")
 
   const [formData, setFormData] = useState({
     // Customer Info
@@ -31,12 +34,6 @@ export default function CheckoutPage() {
     city: "",
     state: "",
     zipCode: "",
-    
-    // Payment Info
-    cardNumber: "",
-    expiryDate: "",
-    cvv: "",
-    cardholderName: "",
   })
 
   useEffect(() => {
@@ -75,7 +72,14 @@ export default function CheckoutPage() {
       return
     }
 
+    // Clear any previous errors and show confirmation modal
+    setError("")
+    setShowConfirmationModal(true)
+  }
+
+  const handleConfirmOrder = async (contactData: { phone: string; notes: string }) => {
     setIsSubmitting(true)
+    setError("")
 
     try {
       const orderData = {
@@ -86,13 +90,20 @@ export default function CheckoutPage() {
           quantity: item.quantity,
           customizations: item.customizations
         })),
-        totalAmount: total + total * 0.08 + 5, // Including tax and delivery
+        totalAmount: total, // Only the cart subtotal, no tax or delivery
         shippingAddress: {
           name: formData.fullName,
           address: formData.address,
           city: formData.city,
+          state: formData.state,
           zipCode: formData.zipCode,
-          phone: formData.phone
+          phone: contactData.phone // Use phone from modal
+        },
+        contactPhone: contactData.phone,
+        additionalNotes: contactData.notes,
+        customerInfo: {
+          email: formData.email,
+          name: formData.fullName
         }
       }
 
@@ -101,11 +112,14 @@ export default function CheckoutPage() {
       if (result.success) {
         setOrderId(result.orderId)
         setOrderSuccess(true)
+        setShowConfirmationModal(false)
         clearCart()
+      } else {
+        setError(result.message || "Failed to create order")
       }
     } catch (error) {
       console.error("Error creating order:", error)
-      // You might want to show an error message to the user here
+      setError(error instanceof Error ? error.message : "An unexpected error occurred. Please try again.")
     } finally {
       setIsSubmitting(false)
     }
@@ -137,9 +151,7 @@ export default function CheckoutPage() {
   }
 
   const subtotal = total
-  const tax = total * 0.08
-  const delivery = 5.00
-  const finalTotal = subtotal + tax + delivery
+  const finalTotal = subtotal
 
   return (
     <div className="min-h-screen pt-20 pb-16 bg-gray-50">
@@ -255,63 +267,6 @@ export default function CheckoutPage() {
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Payment Information */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <CreditCard className="h-5 w-5 mr-2" />
-                    Payment Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="cardholderName">Cardholder Name</Label>
-                    <Input
-                      id="cardholderName"
-                      name="cardholderName"
-                      value={formData.cardholderName}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="cardNumber">Card Number</Label>
-                    <Input
-                      id="cardNumber"
-                      name="cardNumber"
-                      placeholder="1234 5678 9012 3456"
-                      value={formData.cardNumber}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="expiryDate">Expiry Date</Label>
-                      <Input
-                        id="expiryDate"
-                        name="expiryDate"
-                        placeholder="MM/YY"
-                        value={formData.expiryDate}
-                        onChange={handleInputChange}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="cvv">CVV</Label>
-                      <Input
-                        id="cvv"
-                        name="cvv"
-                        placeholder="123"
-                        value={formData.cvv}
-                        onChange={handleInputChange}
-                        required
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
 
             {/* Order Summary */}
@@ -329,7 +284,7 @@ export default function CheckoutPage() {
                           <p className="font-medium">{item.name}</p>
                           <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
                         </div>
-                        <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
+                        <p className="font-medium">Rs. {(item.price * item.quantity).toFixed(2)}</p>
                       </div>
                     ))}
                   </div>
@@ -340,20 +295,15 @@ export default function CheckoutPage() {
                       <span>Subtotal</span>
                       <span>Rs. {subtotal.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span>Tax (8%)</span>
-                      <span>Rs. {tax.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Delivery</span>
-                      <span>Rs. {delivery.toFixed(2)}</span>
-                    </div>
                     <div className="border-t pt-2">
                       <div className="flex justify-between font-semibold text-lg">
                         <span>Total</span>
                         <span>Rs. {finalTotal.toFixed(2)}</span>
                       </div>
                     </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Final pricing including delivery and applicable charges will be confirmed during the phone call.
+                    </p>
                   </div>
 
                   <Button 
@@ -362,7 +312,7 @@ export default function CheckoutPage() {
                     size="lg"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? "Processing..." : "Place Order"}
+                    Place Order
                   </Button>
 
                   <p className="text-xs text-gray-600 text-center mt-4">
@@ -373,6 +323,19 @@ export default function CheckoutPage() {
             </div>
           </div>
         </form>
+
+        {/* Checkout Confirmation Modal */}
+        <CheckoutConfirmationModal
+          isOpen={showConfirmationModal}
+          onClose={() => {
+            setShowConfirmationModal(false)
+            setError("")
+          }}
+          onConfirm={handleConfirmOrder}
+          isSubmitting={isSubmitting}
+          total={finalTotal}
+          error={error}
+        />
       </div>
     </div>
   )
