@@ -267,9 +267,18 @@ export const createOrder = async (orderData: {
     zipCode: string;
     phone: string;
   };
+  contactPhone?: string;
+  additionalNotes?: string;
+  customerInfo?: {
+    email: string;
+    name: string;
+  };
 }) => {
   try {
-    return await callFunction('createOrder', orderData);
+    return await fetchWithAuth(`${API_BASE_URL}/orders`, {
+      method: 'POST',
+      body: JSON.stringify(orderData),
+    });
   } catch (error) {
     console.error('Error creating order:', error);
     throw error;
@@ -772,6 +781,32 @@ export const adminFetchUsers = async () => {
   }
 };
 
+export const adminUpdateUserStatus = async (userId: string, status: string) => {
+  try {
+    const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/users/${userId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating user status:', error);
+    throw error;
+  }
+};
+
+export const adminUpdateUserRole = async (userId: string, role: string) => {
+  try {
+    const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/users/${userId}/role`, {
+      method: 'PATCH',
+      body: JSON.stringify({ role }),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating user role:', error);
+    throw error;
+  }
+};
+
 export const adminFetchContent = async () => {
   try {
     const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/content`);
@@ -967,6 +1002,92 @@ export const fetchAllProductsAdmin = async () => {
     return await response.json();
   } catch (error) {
     console.error('Error fetching products:', error);
+    throw error;
+  }
+};
+
+// Cart Management Functions
+
+/**
+ * Get user's cart from database
+ */
+export const getCart = async () => {
+  try {
+    const response = await fetchWithAuth(`${API_BASE_URL}/cart`, {
+      method: 'GET',
+    });
+    return response;
+  } catch (error) {
+    console.error('Error fetching cart:', error);
+    throw error;
+  }
+};
+
+/**
+ * Add item to cart
+ */
+export const addToCart = async (item: {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image?: string;
+  customizations?: any;
+}) => {
+  try {
+    const response = await fetchWithAuth(`${API_BASE_URL}/cart/items`, {
+      method: 'POST',
+      body: JSON.stringify({ item }),
+    });
+    return response;
+  } catch (error) {
+    console.error('Error adding item to cart:', error);
+    throw error;
+  }
+};
+
+/**
+ * Update item quantity in cart
+ */
+export const updateCartItem = async (itemId: string, quantity: number) => {
+  try {
+    const response = await fetchWithAuth(`${API_BASE_URL}/cart/items/${itemId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ quantity }),
+    });
+    return response;
+  } catch (error) {
+    console.error('Error updating cart item:', error);
+    throw error;
+  }
+};
+
+/**
+ * Remove item from cart
+ */
+export const removeFromCart = async (itemId: string) => {
+  try {
+    const response = await fetchWithAuth(`${API_BASE_URL}/cart/items/${itemId}`, {
+      method: 'DELETE',
+    });
+    return response;
+  } catch (error) {
+    console.error('Error removing item from cart:', error);
+    throw error;
+  }
+};
+
+/**
+ * Clear entire cart
+ */
+export const clearCart = async () => {
+  try {
+    const response = await fetchWithAuth(`${API_BASE_URL}/cart`, {
+      method: 'DELETE',
+    });
+    return response;
+  } catch (error) {
+    console.error('Error clearing cart:', error);
     throw error;
   }
 };

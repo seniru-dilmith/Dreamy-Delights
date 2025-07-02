@@ -46,7 +46,15 @@ class OrderService {
    */
   async createOrder(orderData) {
     // Validate required fields
-    const {items, totalAmount, shippingAddress, userId} = orderData;
+    const {
+      items,
+      totalAmount,
+      shippingAddress,
+      userId,
+      contactPhone,
+      additionalNotes,
+      customerInfo,
+    } = orderData;
 
     if (!userId) {
       throw new Error("User ID is required");
@@ -64,7 +72,20 @@ class OrderService {
       throw new Error("Shipping address is required");
     }
 
-    const result = await this.orderModel.create(orderData);
+    if (!contactPhone) {
+      throw new Error("Contact phone number is required");
+    }
+
+    // Prepare order data with all fields
+    const completeOrderData = {
+      ...orderData,
+      contactPhone,
+      additionalNotes: additionalNotes || "",
+      customerInfo: customerInfo || {},
+      userId,
+    };
+
+    const result = await this.orderModel.create(completeOrderData);
 
     return result;
   }

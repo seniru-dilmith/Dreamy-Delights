@@ -264,12 +264,8 @@ export default function HomePage() {
                         </div>
                       </div>
                       <p className="text-gray-600 mb-4 text-sm">{product.description}</p>
-                      <div className="flex items-center justify-between flex-wrap gap-2">
-                        <span className="text-xl font-bold text-pink-600">Rs. {product.price}</span>
-                        <Button className="bg-pink-500 hover:bg-pink-600 text-sm">
-                          <ShoppingCart className="mr-2 h-4 w-4" />
-                          Add to Cart
-                        </Button>
+                      <div className="flex items-center justify-center">
+                        <span className="text-xl font-bold text-pink-600">{formatPrice(product.price)}</span>
                       </div>
                     </CardContent>
                   </Card>
@@ -283,6 +279,81 @@ export default function HomePage() {
               </div>
             )}
           </div>
+          
+          {/* See the Full Menu Button */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center mt-16"
+          >
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="inline-block"
+            >
+              <Button 
+                asChild 
+                size="lg" 
+                className="bg-gradient-to-r from-pink-500 via-rose-500 to-purple-500 hover:from-pink-600 hover:via-rose-600 hover:to-purple-600 text-white shadow-xl hover:shadow-2xl transition-all duration-500 h-14 px-8 text-lg font-semibold rounded-full relative overflow-hidden group"
+              >
+                <Link href="/menu" className="flex items-center justify-center relative z-10">
+                  <motion.div
+                    animate={{ 
+                      x: [0, 5, 0],
+                      scale: [1, 1.1, 1]
+                    }}
+                    transition={{ 
+                      duration: 2, 
+                      repeat: Infinity, 
+                      ease: "easeInOut" 
+                    }}
+                    className="mr-3"
+                  >
+                    <ShoppingCart className="h-6 w-6" />
+                  </motion.div>
+                  See the Full Menu
+                  <motion.div
+                    animate={{ 
+                      rotate: [0, 360],
+                    }}
+                    transition={{ 
+                      duration: 4, 
+                      repeat: Infinity, 
+                      ease: "linear" 
+                    }}
+                    className="ml-3"
+                  >
+                    ✨
+                  </motion.div>
+                  {/* Animated background gradient */}
+                  <motion.div
+                    animate={{
+                      background: [
+                        "linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0.1) 100%)",
+                        "linear-gradient(45deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.3) 100%)",
+                        "linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0.1) 100%)"
+                      ]
+                    }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                    className="absolute inset-0 opacity-50 group-hover:opacity-75 transition-opacity duration-300"
+                  />
+                </Link>
+              </Button>
+            </motion.div>
+            <motion.p
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="text-gray-600 mt-4 text-sm"
+            >
+              Discover our complete collection of handcrafted delights
+            </motion.p>
+          </motion.div>
         </div>
       </section>
 
@@ -298,7 +369,7 @@ export default function HomePage() {
             >
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Our Sweet Story</h2>
               <p className="text-base md:text-lg text-gray-700 mb-6">
-                For over 15 years, Dreamy Delights has been crafting the finest cakes and cupcakes with love, passion,
+                Dreamy Delights has been crafting the finest cakes and cupcakes with love, passion,
                 and the highest quality ingredients. Every creation tells a story of dedication to the art of baking.
               </p>
               <div className="flex items-center justify-between sm:justify-start sm:space-x-8 mb-6">

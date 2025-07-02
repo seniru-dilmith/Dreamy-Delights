@@ -80,8 +80,8 @@ export default function MenuPage() {
   }
 
   return (
-    <div className="min-h-screen pt-20 pb-16">
-      <div className="max-w-7xl mx-auto px-4">
+    <div className="min-h-screen pt-20 pb-16 overflow-x-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -98,16 +98,16 @@ export default function MenuPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="flex flex-wrap justify-center gap-4 mb-12"
+          className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-12 px-2"
         >
           {categories.map((category) => (
             <Button
               key={category}
               variant={selectedCategory === category ? "default" : "outline"}
               onClick={() => setSelectedCategory(category)}
-              className={selectedCategory === category ? "bg-pink-500 hover:bg-pink-600" : ""}
+              className={`text-sm sm:text-base px-3 sm:px-4 py-2 ${selectedCategory === category ? "bg-pink-500 hover:bg-pink-600" : ""}`}
             >
-              <Filter className="mr-2 h-4 w-4" />
+              <Filter className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
               {category}
             </Button>
           ))}
@@ -137,7 +137,7 @@ export default function MenuPage() {
             </Button>
           </motion.div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
             {filteredProducts.map((product, index) => (
               <motion.div
                 key={product.id}
@@ -164,23 +164,23 @@ export default function MenuPage() {
                       <Heart className="h-5 w-5 text-pink-500" />
                     </motion.button>
                   </div>
-                  <CardContent className="p-6">
+                  <CardContent className="p-4 sm:p-6">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-xl font-semibold">{product.name}</h3>
-                      <div className="flex items-center">
+                      <h3 className="text-lg sm:text-xl font-semibold truncate pr-2">{product.name}</h3>
+                      <div className="flex items-center flex-shrink-0">
                         <Star className="h-4 w-4 text-yellow-400 fill-current" />
                         <span className="ml-1 text-sm text-gray-600">{product.rating}</span>
                       </div>
                     </div>
-                    <p className="text-gray-600 mb-4">{product.description}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-2xl font-bold text-pink-600">${product.price}</span>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={() => setSelectedProduct(product)}>
+                    <p className="text-gray-600 mb-4 text-sm sm:text-base line-clamp-2">{product.description}</p>
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+                      <span className="text-xl sm:text-2xl font-bold text-pink-600">Rs. {product.price}</span>
+                      <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                        <Button variant="outline" size="sm" onClick={() => setSelectedProduct(product)} className="text-xs sm:text-sm">
                           Customize
                         </Button>
-                        <Button className="bg-pink-500 hover:bg-pink-600" onClick={() => handleAddToCart(product)}>
-                          <ShoppingCart className="mr-2 h-4 w-4" />
+                        <Button className="bg-pink-500 hover:bg-pink-600 text-xs sm:text-sm" onClick={() => handleAddToCart(product)}>
+                          <ShoppingCart className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                           Add to Cart
                         </Button>
                       </div>
@@ -203,7 +203,7 @@ export default function MenuPage() {
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="bg-white rounded-lg p-6 max-w-md w-full"
+              className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full mx-4"
               onClick={(e) => e.stopPropagation()}
             >
               <h3 className="text-2xl font-bold mb-4">Customize {selectedProduct.name}</h3>

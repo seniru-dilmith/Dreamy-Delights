@@ -44,44 +44,84 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    // Simple check for admin credentials (for testing)
-    if (username === "admin" && password === "admin123") {
-      const jwt = require("jsonwebtoken");
+    // Check against Firestore admins collection
+    const db = admin.firestore();
+    const adminSnapshot = await db.collection("admins")
+        .where("username", "==", username)
+        .limit(1)
+        .get();
 
-      // Generate a simple JWT token for testing
-      const token = jwt.sign(
-          {
-            id: "test-admin-id",
-            username: "admin",
-            role: "super_admin",
-            permissions: ["manage_products", "manage_orders", "view_analytics"],
-            type: "admin",
-          },
-          process.env.ADMIN_JWT_SECRET ||
-            "your-super-secure-jwt-secret-change-this-in-production",
-          {expiresIn: "24h"},
-      );
-
-      console.log("🔐 Admin login successful (test mode)");
-
-      res.json({
-        success: true,
-        token,
-        admin: {
-          id: "test-admin-id",
-          username: "admin",
-          role: "super_admin",
-          permissions: ["manage_products", "manage_orders", "view_analytics"],
-        },
-        message: "Admin login successful",
-      });
-    } else {
-      console.log("🔐 Invalid credentials:", username);
-      res.status(401).json({
+    if (adminSnapshot.empty) {
+      console.log("🔐 Admin not found:", username);
+      return res.status(401).json({
         success: false,
         message: "Invalid credentials",
       });
     }
+
+    const adminDoc = adminSnapshot.docs[0];
+    const adminData = adminDoc.data();
+
+    // Check if admin is active
+    if (!adminData.active) {
+      console.log("🔐 Admin account disabled:", username);
+      return res.status(401).json({
+        success: false,
+        message: "Account disabled",
+      });
+    }
+
+    // Verify password
+    const bcrypt = require("bcryptjs");
+    const passwordMatch = await bcrypt.compare(password,
+        adminData.hashedPassword);
+
+    if (!passwordMatch) {
+      console.log("🔐 Invalid password for:", username);
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials",
+      });
+    }
+
+    // Update last login
+    await adminDoc.ref.update({
+      lastLogin: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // Generate JWT token
+    const jwt = require("jsonwebtoken");
+    const permissionsArray = Object.entries(adminData.permissions || {})
+        .filter(([key, value]) => value === true)
+        .map(([key]) => key);
+
+    const token = jwt.sign(
+        {
+          id: adminDoc.id,
+          username: adminData.username,
+          role: adminData.role,
+          permissions: permissionsArray,
+          type: "admin",
+        },
+        process.env.ADMIN_JWT_SECRET ||
+          "your-super-secure-jwt-secret-change-this-in-production",
+        {expiresIn: "24h"},
+    );
+
+    console.log("🔐 Admin login successful:", username);
+
+    res.json({
+      success: true,
+      token,
+      admin: {
+        id: adminDoc.id,
+        username: adminData.username,
+        email: adminData.email,
+        role: adminData.role,
+        permissions: permissionsArray,
+      },
+      message: "Admin login successful",
+    });
   } catch (error) {
     console.error("🔐 Admin HTTP login error:", error);
     res.status(500).json({
@@ -688,17 +728,133 @@ router.put("/orders/:id/status",
 router.get("/users", requirePermission("manage_users"), async (req, res) => {
   try {
     const db = admin.firestore();
-    const snapshot = await db.collection("users")
-        .orderBy("createdAt", "desc")
-        .get();
+
+    // Fetch users from Firebase Authentication
+    const listUsersResult = await admin.auth().listUsers();
+    const authUsers = listUsersResult.users;
+
+    // Get all admins from the admins collection for quick lookup
+    const adminsSnapshot = await db.collection("admins").get();
+    const adminsMap = new Map();
+    
+    adminsSnapshot.forEach((doc) => {
+      const adminData = doc.data();
+      // Store with uid as key for easy lookup
+      if (adminData.uid) {
+        adminsMap.set(adminData.uid, {
+          ...adminData,
+          id: doc.id,
+          isInAdminsCollection: true,
+        });
+      } else if (adminData.email) {
+        // Also create an email-based lookup in case we need it
+        adminsMap.set(adminData.email.toLowerCase(), {
+          ...adminData,
+          id: doc.id,
+          isInAdminsCollection: true,
+        });
+      }
+    });
+    
+    console.log(`Found ${adminsMap.size} admins in admins collection`);
 
     const users = [];
-    snapshot.forEach((doc) => {
+
+    for (const authUser of authUsers) {
+      // Check if this user is in the admins collection
+      const adminData = authUser.email ?
+          adminsMap.get(authUser.uid) || 
+          adminsMap.get(authUser.email.toLowerCase()) :
+          adminsMap.get(authUser.uid);
+      
+      // Get regular user data from users collection if not an admin
+      let firestoreData = {};
+      if (!adminData) {
+        try {
+          const userDoc = await db.collection("users").doc(authUser.uid).get();
+          if (userDoc.exists) {
+            firestoreData = userDoc.data();
+          }
+        } catch (firestoreError) {
+          console.log(`No Firestore data for user ${authUser.uid}`);
+        }
+      }
+
+      // Get custom claims (role information)
+      const customClaims = authUser.customClaims || {};
+
+      // Determine name from various sources
+      let displayName = authUser.displayName;
+      if (!displayName && adminData) {
+        displayName = adminData.displayName || adminData.username;
+      }
+      if (!displayName) {
+        displayName = firestoreData.displayName ||
+                    firestoreData.name ||
+                    "No Name";
+      }
+
+      // Determine role
+      let userRole = customClaims.role;
+      if (!userRole && adminData) {
+        userRole = adminData.role;
+      }
+      if (!userRole) {
+        userRole = firestoreData.role || "customer";
+      }
+
+      // Determine status
+      let userStatus = "active";
+      if (authUser.disabled) {
+        userStatus = "banned";
+      } else if (adminData) {
+        userStatus = adminData.active ? "active" : "banned";
+      } else if (firestoreData.status) {
+        userStatus = firestoreData.status;
+      }
+
+      // Determine dates
+      let joinDate = authUser.metadata.creationTime;
+      if (!joinDate && adminData && adminData.createdAt) {
+        joinDate = adminData.createdAt;
+      }
+      if (!joinDate) {
+        joinDate = new Date().toISOString();
+      }
+
+      let lastLogin = authUser.metadata.lastSignInTime;
+      if (!lastLogin && adminData && adminData.lastLogin) {
+        lastLogin = adminData.lastLogin;
+      }
+      if (!lastLogin) {
+        lastLogin = authUser.metadata.creationTime ||
+                  new Date().toISOString();
+      }
+
       users.push({
-        id: doc.id,
-        ...doc.data(),
+        id: authUser.uid,
+        name: displayName,
+        email: authUser.email ||
+              (adminData ? adminData.email : null) ||
+              "No email",
+        role: userRole,
+        status: userStatus,
+        joinDate: joinDate,
+        lastLogin: lastLogin,
+        totalOrders: firestoreData.totalOrders || 0,
+        totalSpent: firestoreData.totalSpent || 0,
+        emailVerified: authUser.emailVerified,
+        providerId: authUser.providerData.map((p) => p.providerId),
+        photoURL: authUser.photoURL,
+        phoneNumber: authUser.phoneNumber,
+        // Add info about which collection this user belongs to
+        isAdmin: !!adminData,
+        adminId: adminData ? adminData.id : null,
       });
-    });
+    }
+
+    // Sort by creation time (newest first)
+    users.sort((a, b) => new Date(b.joinDate) - new Date(a.joinDate));
 
     res.json({
       success: true,
@@ -712,6 +868,131 @@ router.get("/users", requirePermission("manage_users"), async (req, res) => {
     });
   }
 });
+
+/**
+ * Update user status (enable/disable user)
+ */
+router.patch("/users/:userId/status",
+    requirePermission("manage_users"),
+    async (req, res) => {
+      try {
+        const {userId} = req.params;
+        const {status} = req.body;
+
+        if (!["active", "banned"].includes(status)) {
+          return res.status(400).json({
+            success: false,
+            message: "Invalid status. Must be 'active' or 'banned'",
+          });
+        }
+
+        // Update Firebase Auth user
+        await admin.auth().updateUser(userId, {
+          disabled: status === "banned",
+        });
+
+        // Check if this is an admin in the admins collection
+        const db = admin.firestore();
+        const adminSnapshot = await db.collection("admins")
+            .where("uid", "==", userId)
+            .limit(1)
+            .get();
+        
+        if (!adminSnapshot.empty) {
+          // Update admin in admins collection
+          const adminDoc = adminSnapshot.docs[0];
+          await adminDoc.ref.update({
+            active: status === "active",
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+          console.log(`Updated admin status in admins collection: ${userId}`);
+        } else {
+          // For regular users, update users collection
+          const userRef = db.collection("users").doc(userId);
+          const userDoc = await userRef.get();
+
+          if (userDoc.exists) {
+            await userRef.update({
+              status: status,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+          }
+        }
+
+        res.json({
+          success: true,
+          message: `User ${status === "banned" ? "disabled" : "enabled"}` +
+            " successfully",
+        });
+      } catch (error) {
+        console.error("Error updating user status:", error);
+        res.status(500).json({
+          success: false,
+          message: "Failed to update user status",
+        });
+      }
+    });
+
+/**
+ * Update user role
+ */
+router.patch("/users/:userId/role",
+    requirePermission("manage_users"),
+    async (req, res) => {
+      try {
+        const {userId} = req.params;
+        const {role} = req.body;
+
+        if (!["customer", "admin", "editor"].includes(role)) {
+          return res.status(400).json({
+            success: false,
+            message: "Invalid role. Must be 'customer', 'admin', or 'editor'",
+          });
+        }
+
+        // Update custom claims in Firebase Auth
+        await admin.auth().setCustomUserClaims(userId, {role});
+
+        // Check if this is an admin in the admins collection
+        const db = admin.firestore();
+        const adminSnapshot = await db.collection("admins")
+            .where("uid", "==", userId)
+            .limit(1)
+            .get();
+        
+        if (!adminSnapshot.empty) {
+          // Update admin in admins collection
+          const adminDoc = adminSnapshot.docs[0];
+          await adminDoc.ref.update({
+            role: role,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+          console.log(`Updated admin role in admins collection: ${userId}`);
+        } else {
+          // For regular users, update users collection
+          const userRef = db.collection("users").doc(userId);
+          const userDoc = await userRef.get();
+
+          if (userDoc.exists) {
+            await userRef.update({
+              role: role,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+          }
+        }
+
+        res.json({
+          success: true,
+          message: "User role updated successfully",
+        });
+      } catch (error) {
+        console.error("Error updating user role:", error);
+        res.status(500).json({
+          success: false,
+          message: "Failed to update user role",
+        });
+      }
+    });
 
 /**
  * Get website content/settings

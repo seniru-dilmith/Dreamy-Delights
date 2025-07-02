@@ -54,7 +54,7 @@ export default function AboutPage() {
             >
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 md:mb-6 break-words">Our Sweet Story</h1>
               <p className="text-base md:text-lg text-gray-700 mb-4 md:mb-6 leading-relaxed">
-                Founded in 2009, Dreamy Delights began as a small home bakery with a big dream: to create the most
+                Dreamy Delights began as a small home bakery with a big dream: to create the most
                 delicious and beautiful baked goods that bring joy to every celebration.
               </p>
               <p className="text-base md:text-lg text-gray-700 mb-6 md:mb-8 leading-relaxed">
