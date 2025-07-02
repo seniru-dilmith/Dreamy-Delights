@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useAuth } from "../context/AuthContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,8 +13,16 @@ export default function AuthTest() {
   const [name, setName] = useState("Test User")
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
+  const googleButtonRef = useRef<HTMLDivElement>(null)
 
-  const { user, login, loginWithGoogle, register, logout } = useAuth()
+  const { user, login, loginWithGoogle, renderGoogleButton, register, logout } = useAuth()
+
+  // Initialize Google button
+  useEffect(() => {
+    if (googleButtonRef.current) {
+      renderGoogleButton(googleButtonRef.current);
+    }
+  }, [renderGoogleButton]);
 
   const handleLogin = async () => {
     setLoading(true)
@@ -143,13 +151,16 @@ export default function AuthTest() {
               </div>
 
               <div className="grid grid-cols-1 gap-4">
+                {/* Google Identity Services button will be rendered here */}
+                <div ref={googleButtonRef} className="w-full"></div>
+                
                 <Button 
                   onClick={handleGoogleLogin} 
                   disabled={loading}
                   variant="outline"
                   className="w-full"
                 >
-                  Google
+                  Google (Manual)
                 </Button>
               </div>
             </div>

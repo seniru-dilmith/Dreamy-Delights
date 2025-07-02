@@ -88,7 +88,7 @@ export default function CartPage() {
                               </Button>
                             </div>
                             <div className="flex items-center space-x-4">
-                              <span className="text-lg font-semibold">${(item.price * item.quantity).toFixed(2)}</span>
+                              <span className="text-lg font-semibold">Rs.{(item.price * item.quantity).toFixed(2)}</span>
                               <Button
                                 variant="ghost"
                                 size="sm"
