@@ -113,7 +113,10 @@ export default function AnalyticsDashboard() {
     }).format(amount);
   };
 
-  const formatPercentage = (value: number) => {
+  const formatPercentage = (value: number | undefined | null) => {
+    if (value === undefined || value === null) {
+      return '0.0%';
+    }
     return `${value > 0 ? '+' : ''}${value.toFixed(1)}%`;
   };
 
@@ -123,25 +126,28 @@ export default function AnalyticsDashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
+        className="space-y-8"
       >
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h2>
-            <p className="text-gray-600">Track your business performance and insights</p>
+        {/* Filter and period selection */}
+        <div className="flex justify-between items-center">
+          <h2 className="text-3xl font-bold tracking-tight">Analytics Dashboard</h2>
+          <div className="flex items-center space-x-2">
+            <Select
+              value={selectedPeriod}
+              onValueChange={setSelectedPeriod}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="7d">Last 7 days</SelectItem>
+                <SelectItem value="30d">Last 30 days</SelectItem>
+                <SelectItem value="90d">Last 3 months</SelectItem>
+                <SelectItem value="1y">Last year</SelectItem>
+              </SelectContent>
+            </Select>
+            <Calendar className="h-5 w-5 text-gray-500" />
           </div>
-          <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-            <SelectTrigger className="w-40">
-              <Calendar className="w-4 h-4 mr-2" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7d">Last 7 days</SelectItem>
-              <SelectItem value="30d">Last 30 days</SelectItem>
-              <SelectItem value="90d">Last 90 days</SelectItem>
-              <SelectItem value="12m">Last 12 months</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
 
         {/* Key Metrics */}
@@ -208,30 +214,21 @@ export default function AnalyticsDashboard() {
           </Card>
         </div>
 
-        {/* Charts and Data */}
+        {/* Charts Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Revenue Chart */}
+          {/* Sales Chart */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="w-5 h-5" />
-                Revenue & Orders Trend
+                Sales Overview
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {analyticsData.salesByMonth.map((data, index) => (
-                  <div key={data.month} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-3 h-3 bg-purple-600 rounded-full"></div>
-                      <span className="font-medium">{data.month}</span>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-bold">{formatCurrency(data.revenue)}</div>
-                      <div className="text-sm text-gray-600">{data.orders} orders</div>
-                    </div>
-                  </div>
-                ))}
+              {/* Add your chart component here */}
+              <div className="h-[300px] flex items-center justify-center bg-gray-50">
+                {/* This is where your chart would go */}
+                <p className="text-gray-500">Sales chart visualization</p>
               </div>
             </CardContent>
           </Card>
@@ -246,18 +243,22 @@ export default function AnalyticsDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {analyticsData.customersByMonth.map((data, index) => (
-                  <div key={data.month} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
-                      <span className="font-medium">{data.month}</span>
+                {analyticsData.customersByMonth && analyticsData.customersByMonth.length > 0 ? (
+                  analyticsData.customersByMonth.map((data, index) => (
+                    <div key={data.month || `month-${index}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
+                        <span className="font-medium">{data.month || `Month ${index + 1}`}</span>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold">{data.totalCustomers || 0} total</div>
+                        <div className="text-sm text-gray-600">+{data.newCustomers || 0} new</div>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-bold">{data.totalCustomers} total</div>
-                      <div className="text-sm text-gray-600">+{data.newCustomers} new</div>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-gray-500">No customer data available</div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -273,105 +274,37 @@ export default function AnalyticsDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {analyticsData.topProducts.map((product, index) => (
-                <div key={product.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    <div className={`
-                      w-8 h-8 rounded-full flex items-center justify-center text-white font-bold
-                      ${index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : index === 2 ? 'bg-amber-600' : 'bg-gray-300'}
-                    `}>
-                      {index + 1}
+              {analyticsData.topProducts && analyticsData.topProducts.length > 0 ? (
+                analyticsData.topProducts.map((product, index) => (
+                  <div key={product.id || `product-${index}`} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center space-x-4">
+                      <div className={`
+                        w-8 h-8 rounded-full flex items-center justify-center text-white font-bold
+                        ${index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : index === 2 ? 'bg-amber-600' : 'bg-gray-300'}
+                      `}>
+                        {index + 1}
+                      </div>
+                      <div>
+                        <h4 className="font-medium">{product.name || 'Unknown Product'}</h4>
+                        <p className="text-sm text-gray-600">{product.sales || 0} units sold</p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-medium">{product.name}</h4>
-                      <p className="text-sm text-gray-600">{product.sales} units sold</p>
+                    <div className="text-right">
+                      <div className="font-bold">{formatCurrency(product.revenue || 0)}</div>
+                      <div className="text-sm text-gray-600">Revenue</div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="font-bold">{formatCurrency(product.revenue)}</div>
-                    <div className="text-sm text-gray-600">Revenue</div>
-                  </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <div className="text-center py-4 text-gray-500">No product data available</div>
+              )}
             </div>
           </CardContent>
         </Card>
 
         {/* Additional Insights */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Peak Hours</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm">10:00 AM - 12:00 PM</span>
-                  <span className="font-medium">25%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">2:00 PM - 4:00 PM</span>
-                  <span className="font-medium">35%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">6:00 PM - 8:00 PM</span>
-                  <span className="font-medium">40%</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Popular Categories</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm">Cakes</span>
-                  <span className="font-medium">45%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Cupcakes</span>
-                  <span className="font-medium">25%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Pastries</span>
-                  <span className="font-medium">20%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Others</span>
-                  <span className="font-medium">10%</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Customer Satisfaction</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm">5 Stars</span>
-                  <span className="font-medium">75%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">4 Stars</span>
-                  <span className="font-medium">20%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">3 Stars</span>
-                  <span className="font-medium">4%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm">Below 3</span>
-                  <span className="font-medium">1%</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Add your additional insight cards here */}
         </div>
       </motion.div>
     </div>
