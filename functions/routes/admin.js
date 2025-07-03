@@ -736,7 +736,7 @@ router.get("/users", requirePermission("manage_users"), async (req, res) => {
     // Get all admins from the admins collection for quick lookup
     const adminsSnapshot = await db.collection("admins").get();
     const adminsMap = new Map();
-    
+
     adminsSnapshot.forEach((doc) => {
       const adminData = doc.data();
       // Store with uid as key for easy lookup
@@ -755,7 +755,7 @@ router.get("/users", requirePermission("manage_users"), async (req, res) => {
         });
       }
     });
-    
+
     console.log(`Found ${adminsMap.size} admins in admins collection`);
 
     const users = [];
@@ -763,10 +763,10 @@ router.get("/users", requirePermission("manage_users"), async (req, res) => {
     for (const authUser of authUsers) {
       // Check if this user is in the admins collection
       const adminData = authUser.email ?
-          adminsMap.get(authUser.uid) || 
+          adminsMap.get(authUser.uid) ||
           adminsMap.get(authUser.email.toLowerCase()) :
           adminsMap.get(authUser.uid);
-      
+
       // Get regular user data from users collection if not an admin
       let firestoreData = {};
       if (!adminData) {
@@ -897,7 +897,7 @@ router.patch("/users/:userId/status",
             .where("uid", "==", userId)
             .limit(1)
             .get();
-        
+
         if (!adminSnapshot.empty) {
           // Update admin in admins collection
           const adminDoc = adminSnapshot.docs[0];
@@ -959,7 +959,7 @@ router.patch("/users/:userId/role",
             .where("uid", "==", userId)
             .limit(1)
             .get();
-        
+
         if (!adminSnapshot.empty) {
           // Update admin in admins collection
           const adminDoc = adminSnapshot.docs[0];
