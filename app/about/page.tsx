@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion"
 import Image from "next/image"
-import { Award, Users, Clock, Heart, Instagram, Facebook, Twitter } from "lucide-react"
+import { FaAward, FaUsers, FaClock, FaHeart, FaInstagram, FaFacebookF, FaWhatsapp } from "react-icons/fa"
 import { Card, CardContent } from "@/components/ui/card"
 
 const owner = {
@@ -10,30 +10,30 @@ const owner = {
   role: "Meet the Magical Baker",
   bio: "Kethma founded Dreamy Delights to share her passion for creating beautiful, delicious treats. She personally oversees every aspect of the bakery to ensure the highest quality and customer satisfaction.",
   socialMedia: [
-    { platform: "Instagram", icon: Instagram, url: "#", handle: "@dreamydelights" },
-    { platform: "Facebook", icon: Facebook, url: "#", handle: "Dreamy Delights Bakery" },
-    { platform: "Twitter", icon: Twitter, url: "#", handle: "@dreamydelights" },
+    { platform: "Instagram", icon: FaInstagram, url: "https://www.instagram.com/dreamy_dels/", handle: "@dreamy_dels" },
+    { platform: "Facebook", icon: FaFacebookF, url: "https://www.facebook.com/dreamydels", handle: "Dreamy Delights" },
+    { platform: "WhatsApp", icon: FaWhatsapp, url: "https://wa.me/message/G54ADT3RXJYXF1", handle: "Dreamy Delights" },
   ]
 }
 
 const values = [
   {
-    icon: Heart,
+    icon: FaHeart,
     title: "Made with Love",
     description: "Every item is crafted with care and attention to detail",
   },
   {
-    icon: Award,
+    icon: FaAward,
     title: "Quality Ingredients",
     description: "We use only the finest, freshest ingredients available",
   },
   {
-    icon: Users,
+    icon: FaUsers,
     title: "Community Focused",
     description: "Supporting our local community through partnerships and events",
   },
   {
-    icon: Clock,
+    icon: FaClock,
     title: "Fresh Daily",
     description: "All products are baked fresh daily for optimal taste and quality",
   },
