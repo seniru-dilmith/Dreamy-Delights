@@ -130,12 +130,6 @@ export const setAdminToken = (token: string | null) => {
 // Helper function for admin HTTP requests with auth
 const fetchWithAdminAuth = async (url: string, options: RequestInit = {}) => {
   const token = getAdminToken();
-  console.log('🔐 fetchWithAdminAuth called:', {
-    url,
-    method: options.method || 'GET',
-    hasToken: !!token,
-    tokenPreview: token ? `${token.substring(0, 20)}...` : 'No token'
-  });
   
   const headers: Record<string, string> = {
     ...(options.headers as Record<string, string>),
@@ -152,15 +146,10 @@ const fetchWithAdminAuth = async (url: string, options: RequestInit = {}) => {
     console.error('🔐 No admin token available for request');
   }
 
-  console.log('🔐 Request headers:', headers);
-
   const response = await fetch(url, {
     ...options,
     headers,
   });
-
-  console.log('🔐 Response status:', response.status);
-  console.log('🔐 Response headers:', Object.fromEntries(response.headers.entries()));
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
@@ -446,8 +435,6 @@ export const updateTestimonialAdmin = async (id: string, updateData: {
       throw new Error('No admin token available. Please log in again.');
     }
 
-    console.log('🔄 Updating testimonial:', { id, updateData, tokenPreview: token.substring(0, 20) + '...' });
-
     const response = await fetch(`${API_BASE_URL}/testimonials/${id}`, {
       method: 'PUT',
       headers: {
@@ -455,13 +442,6 @@ export const updateTestimonialAdmin = async (id: string, updateData: {
         'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(updateData),
-    });
-
-    console.log('📡 Update response:', {
-      status: response.status,
-      statusText: response.statusText,
-      ok: response.ok,
-      headers: Object.fromEntries(response.headers.entries())
     });
 
     if (!response.ok) {
@@ -486,7 +466,6 @@ export const updateTestimonialAdmin = async (id: string, updateData: {
     }
 
     const result = await response.json();
-    console.log('✅ Update successful:', result);
     return result;
   } catch (error) {
     console.error('Error updating testimonial:', error);
@@ -599,12 +578,7 @@ export const createInitialAdmin = async (adminData: {
 // Admin CRUD Operations
 export const adminFetchProducts = async () => {
   try {
-    console.log('🛍️ Admin Products API Call:');
-    console.log('- URL:', `${API_BASE_URL}/admin/products`);
-    
     const token = getAdminToken();
-    console.log('- Token available:', !!token);
-    console.log('- Token preview:', token ? token.substring(0, 20) + '...' : 'No token');
     
     if (!token) {
       console.warn('No admin token available for products fetch');
@@ -617,19 +591,6 @@ export const adminFetchProducts = async () => {
 
     const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/products`);
     const result = await response.json();
-    
-    console.log('📦 Admin Products API Response:', {
-      success: result.success,
-      dataCount: result.data?.length || 0,
-      message: result.message
-    });
-    
-    if (result.success && result.data) {
-      console.log('✅ Products loaded successfully:', result.data.length, 'products');
-      result.data.forEach((product: any, index: number) => {
-        console.log(`  ${index + 1}. ${product.name} (ID: ${product.id})`);
-      });
-    }
     
     return result;
   } catch (error) {
@@ -657,18 +618,12 @@ export const adminCreateProduct = async (productData: FormData) => {
 
 export const adminCreateProductJSON = async (productData: object) => {
   try {
-    console.log('🌐 adminCreateProductJSON called with:', {
-      productData,
-      url: `${API_BASE_URL}/admin/products`
-    });
-    
     const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/products`, {
       method: 'POST',
       body: JSON.stringify(productData),
     });
     
     const result = await response.json();
-    console.log('🌐 adminCreateProductJSON response:', result);
     return result;
   } catch (error) {
     console.error('🌐 Error creating product (JSON):', error);
@@ -690,7 +645,6 @@ export const adminUpdateProduct = async (id: string, productData: FormData) => {
 };
 
 export const adminUpdateProductJSON = async (id: string, productData: object) => {
-  console.log('🌐 adminUpdateProductJSON called with:', { id, productData });
   const url = `${API_BASE_URL}/admin/products/${id}`;
   // Prepare headers
   const token = getAdminToken();
@@ -698,7 +652,6 @@ export const adminUpdateProductJSON = async (id: string, productData: object) =>
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
-  console.log('🌐 adminUpdateProductJSON headers:', headers);
   // Execute request
   let response: Response;
   try {
@@ -714,7 +667,6 @@ export const adminUpdateProductJSON = async (id: string, productData: object) =>
   } catch (parseError) {
     console.error('🌐 JSON parse error:', parseError);
   }
-  console.log('🌐 adminUpdateProductJSON raw response:', { status: response.status, statusText: response.statusText, body: result });
   // Handle HTTP errors
   if (!response.ok) {
     const message = result?.message || `HTTP ${response.status}: ${response.statusText}`;
@@ -870,11 +822,6 @@ export const fetchDashboardStats = async () => {
   try {
     const token = getAdminToken();
     
-    console.log('🔍 Dashboard Stats API Call:');
-    console.log('- Token available:', !!token);
-    console.log('- Token preview:', token ? token.substring(0, 20) + '...' : 'No token');
-    console.log('- API URL:', `${API_BASE_URL}/admin/dashboard/stats`);
-    
     if (!token) {
       console.warn('No admin token available for dashboard stats');
       return {
@@ -890,12 +837,6 @@ export const fetchDashboardStats = async () => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
-    });
-
-    console.log('📡 Dashboard API Response:', {
-      status: response.status,
-      statusText: response.statusText,
-      ok: response.ok
     });
 
     if (!response.ok) {
@@ -914,7 +855,6 @@ export const fetchDashboardStats = async () => {
     }
 
     const result = await response.json();
-    console.log('✅ Dashboard API Success:', result);
     return result;
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);
@@ -1201,13 +1141,6 @@ export const adminMarkContactMessageAsRead = async (id: string) => {
 export const adminMarkContactMessageAsReplied = async (id: string, replyText?: string) => {
   try {
     const url = `${API_BASE_URL}/admin/contact-messages/${id}/reply`;
-    console.log('🔍 API Call Debug:', {
-      id,
-      replyText,
-      url,
-      API_BASE_URL,
-      NEXT_PUBLIC_FUNCTIONS_URL: process.env.NEXT_PUBLIC_FUNCTIONS_URL
-    });
     
     const response = await fetchWithAdminAuth(url, {
       method: 'PATCH',

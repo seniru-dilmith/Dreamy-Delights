@@ -26,7 +26,6 @@ export default function MenuPage() {
         const response = await fetchProducts({ limit: 50 }); // Get more products for menu
         
         if (response.success && response.data.length > 0) {
-          console.log(`Successfully loaded ${response.data.length} products from API`);
           // Add default customizations if not present
           const productsWithCustomizations = response.data.map((product: any) => ({
             ...product,
@@ -39,7 +38,6 @@ export default function MenuPage() {
           }));
           setProducts(productsWithCustomizations);
         } else {
-          console.log('No products found in API');
           setProducts([]);
         }
       } catch (error) {
