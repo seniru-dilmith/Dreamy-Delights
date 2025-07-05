@@ -28,7 +28,13 @@ const AuthContext = createContext<AuthContextType | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
   const isFirebaseConfigured = isFirebaseReady()
+
+  // Handle hydration
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Convert Firebase user to our User type
   const convertFirebaseUser = async (firebaseUser: FirebaseUser): Promise<User> => {
@@ -47,8 +53,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    if (!auth) {
-      setLoading(false)
+    if (!mounted || !auth) {
+      if (mounted) {
+        setLoading(false)
+      }
       return
     }
     
@@ -63,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
 
     return () => unsubscribe()
-  }, [])
+  }, [mounted])
 
   const login = async (email: string, password: string): Promise<boolean> => {
     console.log("🚀 login called (using Firebase Auth directly)");

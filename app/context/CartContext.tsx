@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useReducer, useEffect, type ReactNode } from "react"
+import { createContext, useContext, useReducer, useEffect, useState, type ReactNode } from "react"
 import { useAuth } from "./AuthContext"
 import { getCart, addToCart as apiAddToCart, updateCartItem, removeFromCart as apiRemoveFromCart, clearCart as apiClearCart } from "@/firebase/api"
 
@@ -161,16 +161,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
     error: null 
   })
   const { user } = useAuth()
+  const [mounted, setMounted] = useState(false)
+
+  // Handle hydration
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Load cart from localStorage on mount (for guest users)
   useEffect(() => {
+    if (!mounted) return
+    
     if (typeof window !== 'undefined') {
       const localCart = loadCartFromLocalStorage()
       if (localCart.length > 0 && !user) {
         dispatch({ type: "LOAD_FROM_LOCALSTORAGE", payload: localCart })
       }
     }
-  }, [])
+  }, [mounted, user])
 
   // Sync cart from database when user logs in
   const syncCart = async () => {
