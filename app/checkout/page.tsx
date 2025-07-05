@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { useCart } from "../context/CartContext"
 import { useAuth } from "../context/AuthContext"
 import { createOrder } from "@/firebase/api"
+import { calculateOrderTotals } from "@/utils/businessConfig"
 import CheckoutConfirmationModal from "../components/CheckoutConfirmationModal"
 
 export default function CheckoutPage() {
@@ -90,7 +91,10 @@ export default function CheckoutPage() {
           quantity: item.quantity,
           customizations: item.customizations
         })),
-        totalAmount: total, // Only the cart subtotal, no tax or delivery
+        totalAmount: finalTotal, // Include tax and delivery in the total
+        subtotal: total,
+        taxAmount: taxAmount,
+        deliveryFee: deliveryFee,
         shippingAddress: {
           name: formData.fullName,
           address: formData.address,
@@ -150,8 +154,8 @@ export default function CheckoutPage() {
     )
   }
 
-  const subtotal = total
-  const finalTotal = subtotal
+  // Calculate totals using utility function
+  const { subtotal, taxAmount, deliveryFee, taxPercentage, finalTotal } = calculateOrderTotals(total)
 
   return (
     <div className="min-h-screen pt-20 pb-16 bg-gray-50">
@@ -295,6 +299,18 @@ export default function CheckoutPage() {
                       <span>Subtotal</span>
                       <span>Rs. {subtotal.toFixed(2)}</span>
                     </div>
+                    {taxAmount > 0 && (
+                      <div className="flex justify-between">
+                        <span>Tax ({(taxPercentage * 100).toFixed(1)}%)</span>
+                        <span>Rs. {taxAmount.toFixed(2)}</span>
+                      </div>
+                    )}
+                    {deliveryFee > 0 && (
+                      <div className="flex justify-between">
+                        <span>Delivery</span>
+                        <span>Rs. {deliveryFee.toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="border-t pt-2">
                       <div className="flex justify-between font-semibold text-lg">
                         <span>Total</span>
@@ -302,7 +318,10 @@ export default function CheckoutPage() {
                       </div>
                     </div>
                     <p className="text-xs text-gray-500 mt-2">
-                      Final pricing including delivery and applicable charges will be confirmed during the phone call.
+                      {taxAmount === 0 && deliveryFee === 0 
+                        ? 'No additional charges applied.' 
+                        : 'Final pricing including all charges will be confirmed during the phone call.'
+                      }
                     </p>
                   </div>
 
