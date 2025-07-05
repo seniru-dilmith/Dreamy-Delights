@@ -1091,3 +1091,166 @@ export const clearCart = async () => {
     throw error;
   }
 };
+
+// CONTACT MESSAGE API FUNCTIONS
+
+/**
+ * Submit a contact message (public endpoint)
+ */
+export const submitContactMessage = async (messageData: {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  subject: string;
+  message: string;
+}) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/contact`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(messageData),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Failed to submit message');
+      throw new Error(errorText);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error submitting contact message:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get all contact messages (admin only)
+ */
+export const adminFetchContactMessages = async (options?: {
+  status?: 'unread' | 'read' | 'replied';
+  limit?: number;
+}) => {
+  try {
+    const params = new URLSearchParams();
+    
+    if (options?.status) {
+      params.append('status', options.status);
+    }
+    
+    if (options?.limit) {
+      params.append('limit', options.limit.toString());
+    }
+
+    const url = `${API_BASE_URL}/admin/contact-messages${params.toString() ? `?${params.toString()}` : ''}`;
+    
+    const response = await fetchWithAdminAuth(url);
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching contact messages:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get contact message statistics (admin only)
+ */
+export const adminFetchContactMessageStats = async () => {
+  try {
+    const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/contact-messages/stats`);
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching contact message stats:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get a specific contact message (admin only)
+ */
+export const adminFetchContactMessage = async (id: string) => {
+  try {
+    const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/contact-messages/${id}`);
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching contact message:', error);
+    throw error;
+  }
+};
+
+/**
+ * Mark contact message as read (admin only)
+ */
+export const adminMarkContactMessageAsRead = async (id: string) => {
+  try {
+    const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/contact-messages/${id}/read`, {
+      method: 'PATCH',
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error marking contact message as read:', error);
+    throw error;
+  }
+};
+
+/**
+ * Mark contact message as replied (admin only)
+ */
+export const adminMarkContactMessageAsReplied = async (id: string, replyText?: string) => {
+  try {
+    const url = `${API_BASE_URL}/admin/contact-messages/${id}/reply`;
+    console.log('🔍 API Call Debug:', {
+      id,
+      replyText,
+      url,
+      API_BASE_URL,
+      NEXT_PUBLIC_FUNCTIONS_URL: process.env.NEXT_PUBLIC_FUNCTIONS_URL
+    });
+    
+    const response = await fetchWithAdminAuth(url, {
+      method: 'PATCH',
+      body: JSON.stringify({ replyText }),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error marking contact message as replied:', error);
+    throw error;
+  }
+};
+
+/**
+ * Update contact message (admin only)
+ */
+export const adminUpdateContactMessage = async (id: string, updateData: {
+  status?: 'unread' | 'read' | 'replied';
+  priority?: 'low' | 'normal' | 'high';
+  reply?: string;
+}) => {
+  try {
+    const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/contact-messages/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updateData),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating contact message:', error);
+    throw error;
+  }
+};
+
+/**
+ * Delete contact message (admin only)
+ */
+export const adminDeleteContactMessage = async (id: string) => {
+  try {
+    const response = await fetchWithAdminAuth(`${API_BASE_URL}/admin/contact-messages/${id}`, {
+      method: 'DELETE',
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error deleting contact message:', error);
+    throw error;
+  }
+};

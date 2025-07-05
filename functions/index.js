@@ -28,7 +28,7 @@ const corsOptions = {
     "https://dreamy-delights-882ff.web.app",
     "https://dreamy-delights-882ff.firebaseapp.com",
   ],
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
   optionsSuccessStatus: 200,
