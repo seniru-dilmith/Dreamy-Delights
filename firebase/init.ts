@@ -2,7 +2,7 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getFunctions, httpsCallable } from "firebase/functions";
-import { getAuth, signInWithCustomToken, signOut, onAuthStateChanged } from "firebase/auth";
+import { getAuth, signInWithCustomToken, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signOut, onAuthStateChanged } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
@@ -87,4 +87,4 @@ export const authFunctions = {
 export const isFirebaseReady = () => isFirebaseInitialized;
 
 // Export Firebase client auth for token management
-export { app, analytics, functions, auth, db, storage, signInWithCustomToken, signOut, onAuthStateChanged };
+export { app, analytics, functions, auth, db, storage, signInWithCustomToken, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signOut, onAuthStateChanged };
