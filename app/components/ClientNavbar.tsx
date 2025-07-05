@@ -8,6 +8,7 @@ export default function ClientNavbar() {
   const isAdminPage = pathname?.startsWith('/admin');
   
   // Don't render navbar on admin pages
+  // (404 pages are handled by ConditionalLayout)
   if (isAdminPage) {
     return null;
   }

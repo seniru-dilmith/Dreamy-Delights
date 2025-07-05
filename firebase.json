@@ -35,6 +35,15 @@
         "destination": "/index.html"
       }
     ],
+    "redirects": [
+      {
+        "source": "/404.html",
+        "destination": "/not-found",
+        "type": 301
+      }
+    ],
+    "cleanUrls": true,
+    "trailingSlash": false,
     "headers": [
       {
         "source": "**/*.@(js|css)",
