@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation"
 import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 import { useAuth } from "../../context/AuthContext"
 
 interface AuthRedirectHandlerProps {
@@ -20,8 +21,10 @@ export default function AuthRedirectHandler({ onRedirectPath, children }: AuthRe
   
   const redirectPath = searchParams.get('redirect') || '/'
   
-  // Notify parent component of the redirect path
-  onRedirectPath(redirectPath)
+  // Notify parent component of the redirect path after render
+  useEffect(() => {
+    onRedirectPath(redirectPath)
+  }, [redirectPath, onRedirectPath])
   
   return children({ router, auth, redirectPath })
 }

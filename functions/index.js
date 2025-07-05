@@ -4,15 +4,20 @@ const express = require("express");
 const cors = require("cors");
 const apiRouter = require("./routes");
 
-// Initialize Firebase Admin SDK with explicit bucket name
-console.log("Initializing Firebase Admin SDK with storage bucket");
+// Load environment variables
+require("dotenv").config();
+
+// Initialize Firebase Admin SDK with environment variables
+console.log("Initializing Firebase Admin SDK with storage bucket from env");
 
 const serviceAccount = require(
     "./dreamy-delights-882ff-firebase-adminsdk-fbsvc-e3a40b9a80.json");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  storageBucket: "dreamy-delights-882ff.firebasestorage.app",
+  storageBucket: process.env.FB_STORAGE_BUCKET,
+  projectId: process.env.FB_PROJECT_ID,
+  databaseURL: process.env.FB_DATABASE_URL,
 });
 
 // Create Express app

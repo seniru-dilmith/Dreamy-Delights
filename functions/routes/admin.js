@@ -89,6 +89,16 @@ router.post("/login", async (req, res) => {
       lastLogin: admin.firestore.FieldValue.serverTimestamp(),
     });
 
+    // Validate JWT secret before token creation
+    const jwtSecret = process.env.ADMIN_JWT_SECRET;
+    if (!jwtSecret) {
+      console.error("❌ ADMIN_JWT_SECRET not configured");
+      return res.status(500).json({
+        success: false,
+        error: "Server configuration error",
+      });
+    }
+
     // Generate JWT token
     const jwt = require("jsonwebtoken");
     const permissionsArray = Object.entries(adminData.permissions || {})
@@ -103,8 +113,7 @@ router.post("/login", async (req, res) => {
           permissions: permissionsArray,
           type: "admin",
         },
-        process.env.ADMIN_JWT_SECRET ||
-          "your-super-secure-jwt-secret-change-this-in-production",
+        jwtSecret,
         {expiresIn: "24h"},
     );
 
