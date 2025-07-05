@@ -23,7 +23,6 @@
     "google-auth-library": "^10.1.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.1",
-    "node-fetch": "^2.7.0",
     "nodemailer": "^7.0.4",
     "uuid": "^11.1.0"
   },
