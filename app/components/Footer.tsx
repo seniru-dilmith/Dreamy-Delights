@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { MapPin, Phone, Mail, Clock, Facebook, Instagram, Twitter } from "lucide-react"
+import { FaMapMarkerAlt, FaPhone, FaEnvelope, FaClock, FaFacebookF, FaInstagram, FaWhatsapp } from "react-icons/fa"
 
 export default function Footer() {
   return (
@@ -25,24 +25,24 @@ export default function Footer() {
               <div className="flex space-x-4">
                 <motion.a
                   whileHover={{ scale: 1.1 }}
-                  href="#"
+                  href="https://www.facebook.com/dreamydels"
                   className="text-gray-400 hover:text-pink-400 transition-colors"
                 >
-                  <Facebook className="h-5 w-5" />
+                  <FaFacebookF className="h-5 w-5" />
                 </motion.a>
                 <motion.a
                   whileHover={{ scale: 1.1 }}
-                  href="#"
+                  href="https://www.instagram.com/dreamy_dels/"
                   className="text-gray-400 hover:text-pink-400 transition-colors"
                 >
-                  <Instagram className="h-5 w-5" />
+                  <FaInstagram className="h-5 w-5" />
                 </motion.a>
                 <motion.a
                   whileHover={{ scale: 1.1 }}
-                  href="#"
+                  href="https://wa.me/message/G54ADT3RXJYXF1"
                   className="text-gray-400 hover:text-pink-400 transition-colors"
                 >
-                  <Twitter className="h-5 w-5" />
+                  <FaWhatsapp className="h-5 w-5" />
                 </motion.a>
               </div>
             </motion.div>
@@ -52,7 +52,7 @@ export default function Footer() {
           <div>
             <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-2">
-              {["Menu", "About", "Gallery", "Blog", "Contact"].map((item) => (
+              {["Home", "Menu", "About", "Contact"].map((item) => (
                 <li key={item}>
                   <Link href={`/${item.toLowerCase()}`} className="text-gray-300 hover:text-pink-400 transition-colors">
                     {item}
@@ -67,16 +67,16 @@ export default function Footer() {
             <h4 className="text-lg font-semibold mb-4">Contact Info</h4>
             <div className="space-y-3">
               <div className="flex items-center">
-                <MapPin className="h-4 w-4 mr-3 text-pink-400" />
-                <span className="text-gray-300">123 Sweet Street, Bakery City, BC 12345</span>
+                <FaMapMarkerAlt className="h-4 w-4 mr-3 text-pink-400" />
+                <span className="text-gray-300">Horana, Sri Lanka</span>
               </div>
               <div className="flex items-center">
-                <Phone className="h-4 w-4 mr-3 text-pink-400" />
-                <span className="text-gray-300">(555) 123-CAKE</span>
+                <FaPhone className="h-4 w-4 mr-3 text-pink-400" />
+                <span className="text-gray-300">(070) 630 9127</span>
               </div>
               <div className="flex items-center">
-                <Mail className="h-4 w-4 mr-3 text-pink-400" />
-                <span className="text-gray-300">hello@dreamydelights.com</span>
+                <FaEnvelope className="h-4 w-4 mr-3 text-pink-400" />
+                <span className="text-gray-300">sansilunikethma@gmail.com</span>
               </div>
             </div>
           </div>
@@ -86,10 +86,10 @@ export default function Footer() {
             <h4 className="text-lg font-semibold mb-4">Hours</h4>
             <div className="space-y-2">
               <div className="flex items-center">
-                <Clock className="h-4 w-4 mr-3 text-pink-400" />
+                <FaClock className="h-4 w-4 mr-3 text-pink-400" />
                 <div className="text-gray-300">
-                  <div>Mon-Fri: 7AM-8PM</div>
-                  <div>Sat-Sun: 8AM-9PM</div>
+                  <div>Mon-Fri: 7:00 AM-8:00 PM</div>
+                  <div>Sat-Sun: 8:00 AM-9:00 PM</div>
                 </div>
               </div>
             </div>

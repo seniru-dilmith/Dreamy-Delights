@@ -1,0 +1,18 @@
+{
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "deploy-functions": "cd functions && firebase deploy --only functions",
+    "logs-functions": "cd functions && firebase functions:log",
+    "deploy-all": "npm run build && cd functions && firebase deploy",
+    "test-admin": "node scripts/test-admin-login.js",
+    "setup-admin": "node scripts/setup-admin.js",
+    "create-admin": "node scripts/create-admin-direct.js",
+    "check-admins": "node scripts/check-admins.js",
+    "verify-admin": "node scripts/verify-admin-users.js",
+    "create-sample-data": "node scripts/test-admin-dashboard.js",
+    "admin-dashboard": "echo 'Opening admin dashboard...' && start http://localhost:3001/admin/dashboard"
+  }
+}
