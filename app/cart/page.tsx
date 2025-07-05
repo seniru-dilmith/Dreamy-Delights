@@ -21,12 +21,7 @@ export default function CartPage() {
   const { taxAmount, deliveryFee, finalTotal } = calculateOrderTotals(total)
 
   const handleCheckout = () => {
-    if (!user) {
-      // Store current path to redirect back after login
-      const currentPath = "/cart"
-      router.push(`/auth/login?redirect=${encodeURIComponent(currentPath)}`)
-      return
-    }
+    // Allow guest users to proceed to checkout, they'll be prompted to login there
     router.push("/checkout")
   }
 
@@ -58,19 +53,7 @@ export default function CartPage() {
         <div className="text-center">
           <ShoppingBag className="h-24 w-24 text-gray-300 mx-auto mb-6" />
           <h2 className="text-3xl font-bold text-gray-900 mb-4">Your cart is empty</h2>
-          {!user ? (
-            <div className="mb-8">
-              <p className="text-gray-600 mb-4">Please log in to see your cart items</p>
-              <Button onClick={() => router.push("/auth/login")} className="bg-pink-500 hover:bg-pink-600 mr-4">
-                Login
-              </Button>
-              <Button variant="outline" onClick={() => router.push("/auth/register")}>
-                Register
-              </Button>
-            </div>
-          ) : (
-            <p className="text-gray-600 mb-8">Add some delicious treats to get started!</p>
-          )}
+          <p className="text-gray-600 mb-8">Add some delicious treats to get started!</p>
           <Button asChild className="bg-pink-500 hover:bg-pink-600">
             <Link href="/menu">Browse Menu</Link>
           </Button>
@@ -211,20 +194,16 @@ export default function CartPage() {
                     size="lg"
                     disabled={loading}
                   >
-                    {user ? "Proceed to Checkout" : (
-                      <>
-                        <Lock className="h-4 w-4 mr-2" />
-                        Login to Checkout
-                      </>
-                    )}
+                    Proceed to Checkout
                   </Button>
 
                   {!user && (
                     <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
                       <p className="text-sm text-blue-800 text-center">
-                        Please sign in to complete your order. 
+                        <Lock className="h-4 w-4 inline mr-1" />
+                        You'll be prompted to sign in before completing your order.
                         <Link 
-                          href={`/auth/register?redirect=${encodeURIComponent("/cart")}`}
+                          href={`/auth/register?redirect=${encodeURIComponent("/checkout")}`}
                           className="text-blue-600 hover:text-blue-800 underline ml-1"
                         >
                           New customer? Create an account
