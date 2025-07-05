@@ -15,7 +15,8 @@ import {
   Eye,
   BarChart3,
   Shield,
-  Star
+  Star,
+  Mail
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,6 +30,7 @@ import ContentManagement from "@/app/admin/components/ContentManagement";
 import UserManagement from "@/app/admin/components/UserManagement";
 import TestimonialManagement from "@/app/admin/components/TestimonialManagement";
 import TestimonialDebugPanel from "@/app/admin/components/TestimonialDebugPanel";
+import ContactMessageManagement from "@/app/admin/components/ContactMessageManagement";
 import AnalyticsDashboard from "@/app/admin/components/AnalyticsDashboard";
 import AdminSettings from "@/app/admin/components/AdminSettings";
 import AdminDebugPanel from "@/app/admin/components/AdminDebugPanel";
@@ -135,6 +137,7 @@ export default function AdminDashboard() {
     { id: "products", label: "Products", icon: Package, permission: ADMIN_PERMISSIONS.MANAGE_PRODUCTS },
     { id: "orders", label: "Orders", icon: ShoppingCart, permission: ADMIN_PERMISSIONS.MANAGE_ORDERS },
     { id: "users", label: "Users", icon: Users, permission: ADMIN_PERMISSIONS.MANAGE_USERS },
+    { id: "messages", label: "Messages", icon: Mail, permission: ADMIN_PERMISSIONS.MANAGE_CONTENT },
     { id: "content", label: "Content", icon: FileText, permission: ADMIN_PERMISSIONS.MANAGE_CONTENT },
     { id: "testimonials", label: "Testimonials", icon: Star, permission: ADMIN_PERMISSIONS.MANAGE_TESTIMONIALS },
     { id: "analytics", label: "Analytics", icon: TrendingUp, permission: ADMIN_PERMISSIONS.VIEW_ANALYTICS },
@@ -158,21 +161,15 @@ export default function AdminDashboard() {
               </div>
             </div>
             
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">{admin.username}</p>
-                <p className="text-xs text-gray-600 capitalize">{admin.role.replace('_', ' ')}</p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleLogout}
-                className="border-red-200 text-red-600 hover:bg-red-50"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </Button>
-            </div>
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              size="sm"
+              className="border-red-200 text-red-600 hover:bg-red-50"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
           </div>
         </div>
       </header>
@@ -410,6 +407,10 @@ export default function AdminDashboard() {
 
           <TabsContent value="users">
             <UserManagement />
+          </TabsContent>
+
+          <TabsContent value="messages">
+            <ContactMessageManagement />
           </TabsContent>
 
           <TabsContent value="content">

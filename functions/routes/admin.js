@@ -89,6 +89,16 @@ router.post("/login", async (req, res) => {
       lastLogin: admin.firestore.FieldValue.serverTimestamp(),
     });
 
+    // Validate JWT secret before token creation
+    const jwtSecret = process.env.ADMIN_JWT_SECRET;
+    if (!jwtSecret) {
+      console.error("❌ ADMIN_JWT_SECRET not configured");
+      return res.status(500).json({
+        success: false,
+        error: "Server configuration error",
+      });
+    }
+
     // Generate JWT token
     const jwt = require("jsonwebtoken");
     const permissionsArray = Object.entries(adminData.permissions || {})
@@ -103,8 +113,7 @@ router.post("/login", async (req, res) => {
           permissions: permissionsArray,
           type: "admin",
         },
-        process.env.ADMIN_JWT_SECRET ||
-          "your-super-secure-jwt-secret-change-this-in-production",
+        jwtSecret,
         {expiresIn: "24h"},
     );
 
@@ -736,7 +745,7 @@ router.get("/users", requirePermission("manage_users"), async (req, res) => {
     // Get all admins from the admins collection for quick lookup
     const adminsSnapshot = await db.collection("admins").get();
     const adminsMap = new Map();
-    
+
     adminsSnapshot.forEach((doc) => {
       const adminData = doc.data();
       // Store with uid as key for easy lookup
@@ -755,7 +764,7 @@ router.get("/users", requirePermission("manage_users"), async (req, res) => {
         });
       }
     });
-    
+
     console.log(`Found ${adminsMap.size} admins in admins collection`);
 
     const users = [];
@@ -763,10 +772,10 @@ router.get("/users", requirePermission("manage_users"), async (req, res) => {
     for (const authUser of authUsers) {
       // Check if this user is in the admins collection
       const adminData = authUser.email ?
-          adminsMap.get(authUser.uid) || 
+          adminsMap.get(authUser.uid) ||
           adminsMap.get(authUser.email.toLowerCase()) :
           adminsMap.get(authUser.uid);
-      
+
       // Get regular user data from users collection if not an admin
       let firestoreData = {};
       if (!adminData) {
@@ -897,7 +906,7 @@ router.patch("/users/:userId/status",
             .where("uid", "==", userId)
             .limit(1)
             .get();
-        
+
         if (!adminSnapshot.empty) {
           // Update admin in admins collection
           const adminDoc = adminSnapshot.docs[0];
@@ -959,7 +968,7 @@ router.patch("/users/:userId/role",
             .where("uid", "==", userId)
             .limit(1)
             .get();
-        
+
         if (!adminSnapshot.empty) {
           // Update admin in admins collection
           const adminDoc = adminSnapshot.docs[0];
@@ -1201,6 +1210,382 @@ router.put("/products/:id/featured",
         res.status(500).json({
           success: false,
           message: "Failed to toggle featured status",
+        });
+      }
+    });
+/**
+ * Contact Messages Management Routes
+ */
+
+/**
+ * Get all contact messages
+ */
+router.get("/contact-messages",
+    requireAnyPermission(["manage_content", "view_analytics"]),
+    async (req, res) => {
+      try {
+        const ContactMessageModel = require("../models/ContactMessage");
+        const contactMessageModel = new ContactMessageModel();
+
+        const {status, limit} = req.query;
+        const options = {};
+
+        if (status && ["unread", "read", "replied"].includes(status)) {
+          options.status = status;
+        }
+
+        if (limit && !isNaN(parseInt(limit))) {
+          options.limit = parseInt(limit);
+        }
+
+        const messages = await contactMessageModel.getAll(options);
+
+        res.json({
+          success: true,
+          data: messages,
+          count: messages.length,
+        });
+      } catch (error) {
+        console.error("Error fetching contact messages:", error);
+        res.status(500).json({
+          success: false,
+          message: "Failed to fetch contact messages",
+        });
+      }
+    });
+
+/**
+ * Get contact message statistics
+ */
+router.get("/contact-messages/stats",
+    requireAnyPermission(["manage_content", "view_analytics"]),
+    async (req, res) => {
+      try {
+        const ContactMessageModel = require("../models/ContactMessage");
+        const contactMessageModel = new ContactMessageModel();
+
+        const stats = await contactMessageModel.getStats();
+
+        res.json({
+          success: true,
+          data: stats,
+        });
+      } catch (error) {
+        console.error("Error fetching contact message stats:", error);
+        res.status(500).json({
+          success: false,
+          message: "Failed to fetch contact message statistics",
+        });
+      }
+    });
+
+/**
+ * Get a specific contact message
+ */
+router.get("/contact-messages/:id",
+    requireAnyPermission(["manage_content", "view_analytics"]),
+    async (req, res) => {
+      try {
+        const ContactMessageModel = require("../models/ContactMessage");
+        const contactMessageModel = new ContactMessageModel();
+        const {id} = req.params;
+
+        if (!id) {
+          return res.status(400).json({
+            success: false,
+            message: "Contact message ID is required",
+          });
+        }
+
+        const message = await contactMessageModel.getById(id);
+
+        if (!message) {
+          return res.status(404).json({
+            success: false,
+            message: "Contact message not found",
+          });
+        }
+
+        res.json({
+          success: true,
+          data: message,
+        });
+      } catch (error) {
+        console.error("Error fetching contact message:", error);
+        res.status(500).json({
+          success: false,
+          message: "Failed to fetch contact message",
+        });
+      }
+    });
+
+/**
+ * Mark contact message as read
+ */
+router.patch("/contact-messages/:id/read",
+    requirePermission("manage_content"),
+    async (req, res) => {
+      try {
+        const ContactMessageModel = require("../models/ContactMessage");
+        const contactMessageModel = new ContactMessageModel();
+        const {id} = req.params;
+
+        if (!id) {
+          return res.status(400).json({
+            success: false,
+            message: "Contact message ID is required",
+          });
+        }
+
+        const updatedMessage = await contactMessageModel.markAsRead(
+            id,
+            req.admin.id,
+        );
+
+        res.json({
+          success: true,
+          message: "Contact message marked as read",
+          data: updatedMessage,
+        });
+      } catch (error) {
+        console.error("Error marking contact message as read:", error);
+
+        if (error.message === "Contact message not found") {
+          return res.status(404).json({
+            success: false,
+            message: error.message,
+          });
+        }
+
+        res.status(500).json({
+          success: false,
+          message: "Failed to mark contact message as read",
+        });
+      }
+    });
+
+/**
+ * Mark contact message as replied and send email
+ */
+router.patch("/contact-messages/:id/reply",
+    requirePermission("manage_content"),
+    async (req, res) => {
+      try {
+        console.log("🔍 Reply endpoint called with:", {
+          id: req.params.id,
+          body: req.body,
+          adminId: req.admin ? req.admin.id : null,
+        });
+
+        const ContactMessageModel = require("../models/ContactMessage");
+        const EmailService = require("../services/EmailService");
+        const contactMessageModel = new ContactMessageModel();
+        const {id} = req.params;
+        const {replyText} = req.body;
+
+        if (!id) {
+          console.log("❌ Missing ID");
+          return res.status(400).json({
+            success: false,
+            message: "Contact message ID is required",
+          });
+        }
+
+        // Reply text is optional - can be empty for just marking as replied
+        const finalReplyText = replyText && replyText.trim() ?
+          replyText.trim() : null;
+
+        console.log("🔍 Processing reply:", {
+          originalReplyText: replyText,
+          finalReplyText,
+          hasReplyText: !!finalReplyText,
+        });
+
+        // Get the original message first
+        const originalMessage = await contactMessageModel.getById(id);
+        if (!originalMessage) {
+          return res.status(404).json({
+            success: false,
+            message: "Contact message not found",
+          });
+        }
+
+        // Mark as replied in database
+        const updatedMessage = await contactMessageModel.markAsReplied(
+            id,
+            req.admin.id,
+            finalReplyText,
+        );
+
+        let emailSent = false;
+        let emailError = null;
+
+        // Try to send email reply (only if there's actual reply text)
+        try {
+          console.log("🔍 Email service check:");
+
+          // Initialize EmailService before checking availability
+          await EmailService.initialize();
+
+          console.log("  EmailService available:", EmailService.isAvailable());
+          console.log("  finalReplyText exists:", !!finalReplyText);
+          console.log("  finalReplyText length:",
+                      finalReplyText ? finalReplyText.length : 0);
+
+          if (EmailService.isAvailable() && finalReplyText) {
+            // Construct customer name from firstName and lastName
+            const firstName = originalMessage.firstName || "";
+            const lastName = originalMessage.lastName || "";
+            const customerName = `${firstName} ${lastName}`.trim() ||
+                                originalMessage.name ||
+                                "Customer";
+
+            console.log(
+                `🔍 Sending email to: ${originalMessage.email}, ` +
+                `Name: ${customerName}`,
+            );
+
+            await EmailService.sendContactReply({
+              to: originalMessage.email,
+              customerName: customerName,
+              originalSubject: originalMessage.subject,
+              replyMessage: finalReplyText,
+              adminName: req.admin.username || "Dreamy Delights Team",
+            });
+            emailSent = true;
+            console.log(`✅ Reply email sent to ${originalMessage.email}`);
+          } else if (!finalReplyText) {
+            console.log(
+                "📝 No reply text - message marked as replied without email",
+            );
+          } else {
+            console.warn(
+                "📧 Email service not available - reply saved but not sent",
+            );
+            emailError = "Email service not configured";
+          }
+        } catch (error) {
+          console.error("❌ Failed to send reply email:", error);
+          emailError = error.message;
+        }
+
+        const successMessage = emailSent ?
+          "Reply sent successfully and email delivered" :
+          "Reply saved successfully" +
+          (emailError ? ` (Email not sent: ${emailError})` : "");
+
+        res.json({
+          success: true,
+          message: successMessage,
+          data: updatedMessage,
+          emailSent,
+          emailError,
+        });
+      } catch (error) {
+        console.error("Error marking contact message as replied:", error);
+
+        if (error.message === "Contact message not found") {
+          return res.status(404).json({
+            success: false,
+            message: error.message,
+          });
+        }
+
+        res.status(500).json({
+          success: false,
+          message: "Failed to mark contact message as replied",
+        });
+      }
+    });
+
+/**
+ * Update contact message
+ */
+router.patch("/contact-messages/:id",
+    requirePermission("manage_content"),
+    async (req, res) => {
+      try {
+        const ContactMessageModel = require("../models/ContactMessage");
+        const contactMessageModel = new ContactMessageModel();
+        const {id} = req.params;
+        const updateData = req.body;
+
+        if (!id) {
+          return res.status(400).json({
+            success: false,
+            message: "Contact message ID is required",
+          });
+        }
+
+        // Remove sensitive fields that shouldn't be updated directly
+        delete updateData.createdAt;
+        delete updateData.ipAddress;
+        delete updateData.userAgent;
+
+        const updatedMessage = await contactMessageModel.update(
+            id,
+            updateData,
+        );
+
+        res.json({
+          success: true,
+          message: "Contact message updated successfully",
+          data: updatedMessage,
+        });
+      } catch (error) {
+        console.error("Error updating contact message:", error);
+
+        if (error.message === "Contact message not found") {
+          return res.status(404).json({
+            success: false,
+            message: error.message,
+          });
+        }
+
+        res.status(500).json({
+          success: false,
+          message: "Failed to update contact message",
+        });
+      }
+    });
+
+/**
+ * Delete contact message
+ */
+router.delete("/contact-messages/:id",
+    requirePermission("manage_content"),
+    async (req, res) => {
+      try {
+        const ContactMessageModel = require("../models/ContactMessage");
+        const contactMessageModel = new ContactMessageModel();
+        const {id} = req.params;
+
+        if (!id) {
+          return res.status(400).json({
+            success: false,
+            message: "Contact message ID is required",
+          });
+        }
+
+        await contactMessageModel.delete(id);
+
+        res.json({
+          success: true,
+          message: "Contact message deleted successfully",
+        });
+      } catch (error) {
+        console.error("Error deleting contact message:", error);
+
+        if (error.message === "Contact message not found") {
+          return res.status(404).json({
+            success: false,
+            message: error.message,
+          });
+        }
+
+        res.status(500).json({
+          success: false,
+          message: "Failed to delete contact message",
         });
       }
     });

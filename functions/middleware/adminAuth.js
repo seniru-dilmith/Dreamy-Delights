@@ -1,9 +1,15 @@
 const jwt = require("jsonwebtoken");
 const admin = require("firebase-admin");
 
-// Use the same secret as configured in functions.config()
-const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET ||
-    "your-super-secure-jwt-secret-change-this-in-production";
+// Function to get JWT secret with validation
+const getJWTSecret = () => {
+  const secret = process.env.ADMIN_JWT_SECRET;
+  if (!secret) {
+    console.error("❌ ADMIN_JWT_SECRET not configured");
+    throw new Error("ADMIN_JWT_SECRET environment variable is required");
+  }
+  return secret;
+};
 
 /**
  * Middleware to verify admin JWT token for HTTP requests
@@ -31,7 +37,7 @@ const verifyAdminToken = async (req, res, next) => {
 
     // Decode and verify the JWT token
     try {
-      decoded = jwt.verify(token, ADMIN_JWT_SECRET);
+      decoded = jwt.verify(token, getJWTSecret());
       console.log("🔐 Decoded JWT token:", {
         id: decoded.id,
         username: decoded.username,

@@ -185,8 +185,11 @@ export default function ContentManagement() {
     try {
       const sanitizedData = {
         ...testimonialForm,
-        customerName: InputSanitizer.sanitizeForDatabase(testimonialForm.customerName),
-        content: InputSanitizer.sanitizeForDatabase(testimonialForm.content),
+        customerName: InputSanitizer.sanitizeForDatabase(testimonialForm.customerName || ""),
+        content: InputSanitizer.sanitizeForDatabase(testimonialForm.content || ""),
+        rating: typeof testimonialForm.rating === 'number' ? testimonialForm.rating : 5,
+        active: testimonialForm.active !== undefined ? testimonialForm.active : true,
+        featured: testimonialForm.featured !== undefined ? testimonialForm.featured : false,
       };
 
       let imageData = null;
@@ -284,11 +287,11 @@ export default function ContentManagement() {
       });
     } else if (type === "testimonials") {
       setTestimonialForm({
-        customerName: item.customerName,
-        content: item.content,
-        rating: item.rating,
-        active: item.active,
-        featured: item.featured,
+        customerName: item?.customerName || "",
+        content: item?.content || "",
+        rating: typeof item?.rating === 'number' ? item.rating : 5,
+        active: item?.active !== undefined ? item.active : true,
+        featured: item?.featured || false,
       });
     } else if (type === "about") {
       setAboutForm({
@@ -548,52 +551,60 @@ export default function ContentManagement() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {testimonials.map(testimonial => (
-                    <Card key={testimonial.id}>
+                  {testimonials && testimonials.length > 0 ? testimonials.map(testimonial => (
+                    <Card key={testimonial?.id || Math.random().toString()}>
                       <CardContent className="p-4">
                         <div className="flex items-start space-x-3 mb-3">
-                          {testimonial.imageUrl ? (
+                          {testimonial?.imageUrl ? (
                             <img
                               src={testimonial.imageUrl}
-                              alt={testimonial.customerName}
+                              alt={testimonial?.customerName || 'Customer'}
                               className="w-12 h-12 object-cover rounded-full"
                             />
                           ) : (
                             <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                              <span className="text-gray-500 text-lg">{testimonial.customerName.charAt(0)}</span>
+                              <span className="text-gray-500 text-lg">
+                                {testimonial?.customerName && testimonial.customerName.length > 0 
+                                  ? testimonial.customerName.charAt(0) 
+                                  : '?'}
+                              </span>
                             </div>
                           )}
                           <div className="flex-1">
-                            <h4 className="font-medium">{testimonial.customerName}</h4>
+                            <h4 className="font-medium">{testimonial?.customerName || 'Anonymous'}</h4>
                             <div className="flex space-x-1">
-                              {[...Array(testimonial.rating)].map((_, i) => (
+                              {testimonial?.rating ? [...Array(Math.min(testimonial.rating, 5))].map((_, i) => (
                                 <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                              ))}
+                              )) : null}
                             </div>
                           </div>
                         </div>
-                        <p className="text-sm text-gray-600 mb-3">{testimonial.content}</p>
+                        <p className="text-sm text-gray-600 mb-3">{testimonial?.content || 'No content'}</p>
                         <div className="flex justify-between items-center">
                           <div className="flex space-x-2">
-                            {testimonial.featured && (
+                            {testimonial?.featured && (
                               <span className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">Featured</span>
                             )}
-                            <span className={`px-2 py-1 rounded-full text-xs ${testimonial.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                              {testimonial.active ? 'Active' : 'Inactive'}
+                            <span className={`px-2 py-1 rounded-full text-xs ${testimonial?.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                              {testimonial?.active ? 'Active' : 'Inactive'}
                             </span>
                           </div>
                           <div className="flex space-x-2">
                             <Button size="sm" variant="outline" onClick={() => handleEdit(testimonial, "testimonials")}>
                               <Edit className="w-4 h-4" />
                             </Button>
-                            <Button size="sm" variant="destructive" onClick={() => handleDelete(testimonial.id, "testimonials", testimonial.imagePath)}>
+                            <Button size="sm" variant="destructive" onClick={() => handleDelete(testimonial?.id, "testimonials", testimonial?.imagePath)}>
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
                         </div>
                       </CardContent>
                     </Card>
-                  ))}
+                  )) : (
+                    <div className="col-span-2 p-6 text-center text-gray-500">
+                      No testimonials found. Add your first testimonial using the button above.
+                    </div>
+                  )}
                 </div>
               </TabsContent>
 

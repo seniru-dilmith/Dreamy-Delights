@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion"
 import Image from "next/image"
-import { Award, Users, Clock, Heart, Instagram, Facebook, Twitter } from "lucide-react"
+import { FaAward, FaUsers, FaClock, FaHeart, FaInstagram, FaFacebookF, FaWhatsapp } from "react-icons/fa"
 import { Card, CardContent } from "@/components/ui/card"
 
 const owner = {
@@ -10,30 +10,30 @@ const owner = {
   role: "Meet the Magical Baker",
   bio: "Kethma founded Dreamy Delights to share her passion for creating beautiful, delicious treats. She personally oversees every aspect of the bakery to ensure the highest quality and customer satisfaction.",
   socialMedia: [
-    { platform: "Instagram", icon: Instagram, url: "#", handle: "@dreamydelights" },
-    { platform: "Facebook", icon: Facebook, url: "#", handle: "Dreamy Delights Bakery" },
-    { platform: "Twitter", icon: Twitter, url: "#", handle: "@dreamydelights" },
+    { platform: "Instagram", icon: FaInstagram, url: "https://www.instagram.com/dreamy_dels/", handle: "@dreamy_dels" },
+    { platform: "Facebook", icon: FaFacebookF, url: "https://www.facebook.com/dreamydels", handle: "Dreamy Delights" },
+    { platform: "WhatsApp", icon: FaWhatsapp, url: "https://wa.me/message/G54ADT3RXJYXF1", handle: "Dreamy Delights" },
   ]
 }
 
 const values = [
   {
-    icon: Heart,
+    icon: FaHeart,
     title: "Made with Love",
     description: "Every item is crafted with care and attention to detail",
   },
   {
-    icon: Award,
+    icon: FaAward,
     title: "Quality Ingredients",
     description: "We use only the finest, freshest ingredients available",
   },
   {
-    icon: Users,
+    icon: FaUsers,
     title: "Community Focused",
     description: "Supporting our local community through partnerships and events",
   },
   {
-    icon: Clock,
+    icon: FaClock,
     title: "Fresh Daily",
     description: "All products are baked fresh daily for optimal taste and quality",
   },
@@ -58,7 +58,7 @@ export default function AboutPage() {
                 delicious and beautiful baked goods that bring joy to every celebration.
               </p>
               <p className="text-base md:text-lg text-gray-700 mb-6 md:mb-8 leading-relaxed">
-                What started in Sarah's kitchen has grown into a beloved local bakery, but our commitment to quality,
+                What started in the kitchen has grown into a beloved local bakery, but our commitment to quality,
                 creativity, and customer satisfaction remains unchanged.
               </p>
               <div className="flex items-center justify-between sm:justify-start sm:space-x-6 md:space-x-8 max-w-sm mx-auto md:mx-0">

@@ -1,6 +1,5 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const fetch = require("node-fetch");
 
 /**
  * Login with email and password
@@ -29,8 +28,15 @@ exports.loginWithEmail = functions.https.onCall(async (data, context) => {
 
   try {
     // Get Firebase API key from environment variables
-    const firebaseApiKey = process.env.FIREBASE_API_KEY ||
-                          "REDACTED_API_KEY";
+    const firebaseApiKey = process.env.FB_API_KEY;
+
+    if (!firebaseApiKey) {
+      console.log("❌ Firebase API key not available");
+      throw new functions.https.HttpsError(
+          "failed-precondition",
+          "Firebase API key not configured",
+      );
+    }
 
     console.log("Using API key for authentication");
 
@@ -156,7 +162,11 @@ exports.registerWithEmail = functions.https.onCall(async (data, context) => {
  * Login with Google OAuth
  */
 exports.loginWithGoogle = functions.https.onCall(async (data, context) => {
-  console.log("loginWithGoogle called");
+  console.log("🚀 loginWithGoogle called");
+  console.log("🌍 Environment variables:");
+  console.log("  - GOOGLE_CLIENT_ID:",
+      process.env.GOOGLE_CLIENT_ID ? "SET" : "NOT SET");
+  console.log("  - FB_API_KEY:", process.env.FB_API_KEY ? "SET" : "NOT SET");
 
   // The data might be nested differently in 2nd gen functions
   let actualData = data;
@@ -164,13 +174,15 @@ exports.loginWithGoogle = functions.https.onCall(async (data, context) => {
     actualData = data.data;
   }
 
-  console.log("Extracted data keys:", Object.keys(actualData));
-  console.log("ID Token received:", !!actualData.idToken);
+  console.log("📝 Extracted data keys:", Object.keys(actualData));
+  console.log("🔑 ID Token received:", !!actualData.idToken);
+  console.log("🔑 ID Token length:",
+      actualData.idToken ? actualData.idToken.length : 0);
 
   const {idToken} = actualData;
 
   if (!idToken) {
-    console.log("Missing Google ID token");
+    console.log("❌ Missing Google ID token");
     throw new functions.https.HttpsError(
         "invalid-argument",
         "Google ID token is required",
@@ -178,87 +190,138 @@ exports.loginWithGoogle = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    console.log("Verifying Google ID token...");
+    console.log("🔍 Verifying Google ID token...");
 
-    // Use Firebase Auth to verify the Google token
-    // First try to get the user by the Google token
-    let decodedToken;
-    try {
-      // Try to decode as Firebase token first (in case it's already Firebase)
-      decodedToken = await admin.auth().verifyIdToken(idToken);
-      console.log("Token verified as Firebase token for user:",
-          decodedToken.email);
-    } catch (firebaseError) {
-      console.log("Not a Firebase token, treating as Google ID token");
+    // Get Google Client ID from environment variables
+    const googleClientId = process.env.GOOGLE_CLIENT_ID;
 
-      // If it's not a Firebase token, we need to verify it as a Google token
-      // For now, let's extract the user info from the Google token manually
-      const {OAuth2Client} = require("google-auth-library");
-      const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    console.log("🆔 Using Google Client ID:",
+        googleClientId ? "SET" : "NOT SET");
 
-      try {
-        const ticket = await client.verifyIdToken({
-          idToken: idToken,
-          audience: process.env.GOOGLE_CLIENT_ID,
-        });
-
-        const payload = ticket.getPayload();
-        console.log("Google token verified for user:", payload.email);
-
-        // Create a decoded token object similar to Firebase format
-        decodedToken = {
-          uid: payload.sub, // Google user ID
-          email: payload.email,
-          name: payload.name,
-          picture: payload.picture,
-          email_verified: payload.email_verified,
-        };
-      } catch (googleError) {
-        console.error("Failed to verify Google token:", googleError);
-        throw new functions.https.HttpsError(
-            "unauthenticated",
-            "Invalid Google ID token",
-        );
-      }
+    if (!googleClientId) {
+      console.log("❌ Google Client ID not available");
+      throw new functions.https.HttpsError(
+          "failed-precondition",
+          "Google Client ID not configured",
+      );
     }
 
-    // Create or get user
+    // Verify Google ID token directly (skip Firebase token verification)
+    console.log("🔍 Verifying Google ID token directly",
+        "with google-auth-library");
+    const {OAuth2Client} = require("google-auth-library");
+    const client = new OAuth2Client(googleClientId);
+
+    let decodedToken;
+    try {
+      const ticket = await client.verifyIdToken({
+        idToken: idToken,
+        audience: googleClientId,
+      });
+
+      const payload = ticket.getPayload();
+      console.log("✅ Google token verified for user:", payload.email);
+      console.log("👤 User payload:", {
+        sub: payload.sub,
+        email: payload.email,
+        name: payload.name,
+        picture: payload.picture,
+        email_verified: payload.email_verified,
+      });
+
+      // Create a decoded token object
+      decodedToken = {
+        uid: payload.sub, // Google user ID
+        email: payload.email,
+        name: payload.name,
+        picture: payload.picture,
+        email_verified: payload.email_verified,
+      };
+    } catch (googleError) {
+      console.error("❌ Failed to verify Google token:", googleError);
+      throw new functions.https.HttpsError(
+          "unauthenticated",
+          "Invalid Google ID token: " + googleError.message,
+      );
+    }
+
+    console.log("👤 Decoded token:", decodedToken);
+
+    // Create or get user - use email-based lookup
     let userRecord;
     let isNewUser = false;
     try {
-      userRecord = await admin.auth().getUser(decodedToken.uid);
-      console.log("Existing user found:", userRecord.email);
+      console.log("🔍 Looking up user by email:", decodedToken.email);
+      userRecord = await admin.auth().getUserByEmail(decodedToken.email);
+      console.log("✅ Existing user found:", {
+        uid: userRecord.uid,
+        email: userRecord.email,
+        displayName: userRecord.displayName,
+      });
     } catch (error) {
-      console.log("Creating new user for:", decodedToken.email);
-      // User doesn't exist, create them
-      userRecord = await admin.auth().createUser({
-        uid: decodedToken.uid,
+      console.log("👤 User not found, creating new user for:",
+          decodedToken.email);
+      console.log("🔧 User creation parameters:", {
         email: decodedToken.email,
         displayName: decodedToken.name,
         photoURL: decodedToken.picture,
         emailVerified: decodedToken.email_verified,
       });
-      isNewUser = true;
+
+      try {
+        userRecord = await admin.auth().createUser({
+          email: decodedToken.email,
+          displayName: decodedToken.name,
+          photoURL: decodedToken.picture,
+          emailVerified: decodedToken.email_verified,
+        });
+        console.log("✅ New user created:", {
+          uid: userRecord.uid,
+          email: userRecord.email,
+        });
+        isNewUser = true;
+      } catch (createError) {
+        console.error("❌ Failed to create user:", createError);
+        throw new functions.https.HttpsError(
+            "internal",
+            "Failed to create user: " + createError.message,
+        );
+      }
     }
 
     // Set default role for new users
     if (isNewUser) {
-      console.log("Setting role for new user");
-      await admin.auth().setCustomUserClaims(userRecord.uid, {
-        role: "customer",
-      });
+      console.log("🏷️ Setting role for new user");
+      try {
+        await admin.auth().setCustomUserClaims(userRecord.uid, {
+          role: "customer",
+        });
+        console.log("✅ Role set successfully");
+      } catch (roleError) {
+        console.error("⚠️ Failed to set role:", roleError);
+        // Don't fail the login for this
+      }
     }
 
     // Create custom token for the client
-    console.log("Creating custom token...");
-    const customToken = await admin.auth().createCustomToken(userRecord.uid);
+    console.log("🔑 Creating custom token for uid:", userRecord.uid);
+    let customToken;
+    try {
+      customToken = await admin.auth().createCustomToken(userRecord.uid);
+      console.log("✅ Custom token created successfully");
+    } catch (tokenError) {
+      console.error("❌ Failed to create custom token:", tokenError);
+      throw new functions.https.HttpsError(
+          "internal",
+          "Failed to create authentication token: " + tokenError.message,
+      );
+    }
 
     // Get user role from custom claims, default to 'customer'
     const userRole = (userRecord.customClaims &&
         userRecord.customClaims.role) || "customer";
 
-    console.log("Google login successful for:", userRecord.email);
-    return {
+    const response = {
       success: true,
       user: {
         uid: userRecord.uid,
@@ -269,11 +332,27 @@ exports.loginWithGoogle = functions.https.onCall(async (data, context) => {
       },
       customToken,
     };
+
+    console.log("🎉 Google login successful for:", userRecord.email);
+    console.log("📤 Returning response:", {
+      success: response.success,
+      user: response.user,
+      customTokenLength: response.customToken ? response.customToken.length : 0,
+    });
+
+    return response;
   } catch (error) {
-    console.error("Google login error:", error);
+    console.error("💥 Google login error:", error);
+    console.error("💥 Error stack:", error.stack);
+
+    // Re-throw HttpsError as-is, wrap others
+    if (error.code && error.code.startsWith("functions/")) {
+      throw error;
+    }
+
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "Google authentication failed",
+        "internal",
+        "Google authentication failed: " + error.message,
     );
   }
 });

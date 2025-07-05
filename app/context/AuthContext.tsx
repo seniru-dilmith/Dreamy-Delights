@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
-import { type User as FirebaseUser } from "firebase/auth"
+import { type User as FirebaseUser, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "firebase/auth"
 import { authFunctions, auth, signInWithCustomToken, signOut, onAuthStateChanged, isFirebaseReady } from "@/firebase/init"
 
 interface User {
@@ -32,28 +32,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Convert Firebase user to our User type
   const convertFirebaseUser = async (firebaseUser: FirebaseUser): Promise<User> => {
-    // Get user role from custom claims instead of hardcoded email
-    try {
-      const idTokenResult = await firebaseUser.getIdTokenResult()
-      const role = idTokenResult.claims.role || 'customer'
-      
-      return {
-        id: firebaseUser.uid,
-        name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
-        email: firebaseUser.email || '',
-        role: role as "customer" | "admin",
-        photoURL: firebaseUser.photoURL || undefined
-      }
-    } catch (error) {
-      console.error("Error getting user claims:", error)
-      // Fallback to customer role if we can't get claims
-      return {
-        id: firebaseUser.uid,
-        name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
-        email: firebaseUser.email || '',
-        role: "customer",
-        photoURL: firebaseUser.photoURL || undefined
-      }
+    // For now, we'll skip custom claims to avoid IAM permission issues
+    // All users will default to 'customer' role
+    console.log("🔄 Converting Firebase user:", firebaseUser.email);
+    console.log("📝 Defaulting to customer role to avoid IAM issues");
+    
+    return {
+      id: firebaseUser.uid,
+      name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+      email: firebaseUser.email || '',
+      role: "customer", // Always customer for now
+      photoURL: firebaseUser.photoURL || undefined
     }
   }
 
@@ -77,44 +66,76 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const login = async (email: string, password: string): Promise<boolean> => {
+    console.log("🚀 login called (using Firebase Auth directly)");
+    
     if (!auth) {
-      console.error("Firebase not available")
+      console.error("❌ Firebase not available")
       return false
     }
     
     try {
-      const result = await authFunctions.loginWithEmail({ email, password })
-      const data = result.data as any
+      console.log("🔧 Signing in with email and password...");
       
-      if (data.success && data.customToken) {
-        // Sign in with custom token
-        await signInWithCustomToken(auth, data.customToken)
-        return true
-      }
-      return false
+      // Use Firebase Auth directly for email/password login
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      console.log("✅ Email/password login successful!");
+      console.log("👤 User info:", {
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+        displayName: userCredential.user.displayName
+      });
+      
+      // Firebase Auth will automatically trigger onAuthStateChanged
+      // which will update our user state
+      return true;
+      
     } catch (error) {
-      console.error("Login error:", error)
-      return false
+      console.error("💥 Email/password login error:", error);
+      console.error("💥 Error details:", {
+        message: (error as any)?.message || 'Unknown error',
+        code: (error as any)?.code || 'No code',
+      });
+      
+      // Handle specific error cases
+      if ((error as any)?.code === 'auth/user-not-found') {
+        console.log("ℹ️ User not found");
+        return false;
+      }
+      
+      if ((error as any)?.code === 'auth/wrong-password') {
+        console.log("ℹ️ Wrong password");
+        return false;
+      }
+      
+      if ((error as any)?.code === 'auth/invalid-email') {
+        console.log("ℹ️ Invalid email");
+        return false;
+      }
+      
+      return false;
     }
   }
 
   const loginWithGoogle = async (): Promise<boolean> => {
+    console.log("🚀 loginWithGoogle called (using Firebase Auth directly)");
+    
     if (!auth) {
-      console.error("Firebase not available")
+      console.error("❌ Firebase not available")
       return false
     }
     
     try {
       // Check if Google OAuth is configured
       const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-      console.log("Google Client ID available:", !!googleClientId);
+      console.log("🔑 Google Client ID:", googleClientId ? "SET" : "NOT SET");
       
       if (!googleClientId || googleClientId.includes('your-')) {
-        console.error("Google Client ID not configured properly");
+        console.error("❌ Google Client ID not configured properly:", googleClientId);
         alert(`Google Sign-In setup required:
 
 1. Go to Google Cloud Console
-2. Create OAuth 2.0 credentials
+2. Create OAuth 2.0 credentials  
 3. Add your domain to authorized origins
 4. Update NEXT_PUBLIC_GOOGLE_CLIENT_ID in .env.local
 
@@ -122,174 +143,130 @@ For now, please use email/password authentication.`);
         return false;
       }
 
-      console.log("Starting Google Sign-In process...");
+      console.log("✅ Google Client ID configured properly");
 
-      // Load Google Identity Services script if not already loaded
-      if (typeof window !== 'undefined' && !window.google) {
-        console.log("Loading Google Identity Services script...");
-        await new Promise<void>((resolve, reject) => {
-          const script = document.createElement('script');
-          script.src = 'https://accounts.google.com/gsi/client';
-          script.async = true;
-          script.defer = true;
-          script.onload = () => {
-            console.log("Google Identity Services script loaded");
-            resolve();
-          };
-          script.onerror = (error) => {
-            console.error("Failed to load Google Identity Services script:", error);
-            reject(new Error('Failed to load Google Sign-In'));
-          };
-          document.head.appendChild(script);
-        });
-      }
-
-      // Wait a bit for the script to initialize
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Initialize and perform Google Sign-In
-      return new Promise<boolean>((resolve) => {
-        if (typeof window === 'undefined' || !window.google || !window.google.accounts) {
-          console.error("Google Identity Services not properly initialized");
-          alert("Google Sign-In is not available. Please try again or use email/password authentication.");
-          resolve(false);
-          return;
-        }
-
-        console.log("Initializing Google Sign-In...");
-        
-        try {
-          window.google.accounts.id.initialize({
-            client_id: googleClientId,
-            callback: async (response: { credential: string }) => {
-              try {
-                console.log("Google Sign-In callback triggered");
-                console.log("Credential received:", !!response.credential);
-                
-                // Send the ID token to our Firebase function
-                console.log("Calling Firebase function...");
-                const result = await authFunctions.loginWithGoogle({ idToken: response.credential });
-                const data = result.data as any;
-                
-                console.log("Firebase function response:", data);
-                
-                if (data.success && data.customToken) {
-                  console.log("Signing in with custom token...");
-                  // Sign in with custom token
-                  await signInWithCustomToken(auth, data.customToken);
-                  console.log("Google Sign-In successful!");
-                  resolve(true);
-                } else {
-                  console.error("Firebase function did not return success:", data);
-                  alert("Google Sign-In failed on server. Please try again or use email/password authentication.");
-                  resolve(false);
-                }
-              } catch (error) {
-                console.error("Google login callback error:", error);
-                alert("Google Sign-In failed. Please try again or use email/password authentication.");
-                resolve(false);
-              }
-            },
-            auto_select: false,
-            cancel_on_tap_outside: true
-          });
-
-          // Try One Tap first with error handling
-          console.log("Attempting Google One Tap...");
-          try {
-            window.google.accounts.id.prompt((notification: any) => {
-              console.log("One Tap notification:", notification);
-              if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-                console.log("One Tap not displayed, user can try the Google button");
-                alert(`Google Sign-In Configuration Issue:
-
-One Tap is not available. This is likely because:
-1. The domain localhost:3000 is not configured in Google Cloud Console
-2. You need to add authorized JavaScript origins
-
-To fix this:
-1. Go to Google Cloud Console
-2. Navigate to APIs & Services > Credentials  
-3. Edit OAuth 2.0 Client ID: 408108296000-m3j6qfungr6hu0tibuu77v4lf1po4i4e
-4. Add http://localhost:3000 to Authorized JavaScript origins
-5. Save the changes
-
-For now, please use email/password authentication.`);
-                resolve(false);
-              }
-            });
-          } catch (promptError) {
-            console.error("Google One Tap prompt error:", promptError);
-            alert(`Google Sign-In Configuration Error:
-
-The Google OAuth configuration has an issue, likely a domain mismatch.
-
-To fix this:
-1. Go to Google Cloud Console
-2. Navigate to APIs & Services > Credentials  
-3. Edit OAuth 2.0 Client ID: 408108296000-m3j6qfungr6hu0tibuu77v4lf1po4i4e
-4. Add http://localhost:3000 to Authorized JavaScript origins
-5. Add http://localhost:3000 to Authorized redirect URIs
-6. Save the changes
-
-For now, please use email/password authentication.`);
-            resolve(false);
-          }
-        } catch (initError) {
-          console.error("Error initializing Google Sign-In:", initError);
-          alert("Failed to initialize Google Sign-In. Please try again or use email/password authentication.");
-          resolve(false);
-        }
+      // Use Firebase Auth Google provider directly
+      console.log("🔧 Setting up Google Auth Provider...");
+      const provider = new GoogleAuthProvider();
+      
+      // Optional: Add scopes if needed
+      provider.addScope('email');
+      provider.addScope('profile');
+      
+      console.log("🚀 Starting Google Sign-In popup...");
+      
+      // Sign in with popup
+      const result = await signInWithPopup(auth, provider);
+      
+      console.log("✅ Google Sign-In successful!");
+      console.log("👤 User info:", {
+        uid: result.user.uid,
+        email: result.user.email,
+        displayName: result.user.displayName,
+        photoURL: result.user.photoURL
       });
+      
+      // Firebase Auth will automatically trigger onAuthStateChanged
+      // which will update our user state
+      return true;
+      
     } catch (error) {
-      console.error("Google login error:", error);
-      alert("Google Sign-In is not available. Please use email/password authentication.");
+      console.error("💥 Google login error:", error);
+      console.error("💥 Error details:", {
+        message: (error as any)?.message || 'Unknown error',
+        code: (error as any)?.code || 'No code',
+      });
+      
+      // Handle specific error cases
+      if ((error as any)?.code === 'auth/popup-closed-by-user') {
+        console.log("ℹ️ User closed the popup");
+        return false;
+      }
+      
+      if ((error as any)?.code === 'auth/popup-blocked') {
+        alert("Popup was blocked by your browser. Please allow popups for this site and try again.");
+        return false;
+      }
+      
+      alert("Google Sign-In failed. Please try again or use email/password authentication.");
       return false;
     }
   }
 
   const register = async (name: string, email: string, password: string): Promise<boolean> => {
+    console.log("🚀 register called (using Firebase Auth directly)");
+    
     if (!auth) {
-      console.error("Firebase not available")
+      console.error("❌ Firebase not available")
       return false
     }
     
     try {
-      const result = await authFunctions.registerWithEmail({ 
-        email, 
-        password, 
-        displayName: name 
-      })
-      const data = result.data as any
+      console.log("🔧 Creating user with email and password...");
       
-      if (data.success && data.customToken) {
-        // Sign in with custom token
-        await signInWithCustomToken(auth, data.customToken)
-        return true
+      // Use Firebase Auth directly for email/password registration
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      console.log("✅ User created successfully!");
+      console.log("👤 User info:", {
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+      });
+      
+      // Update the user's display name
+      if (name) {
+        console.log("🔧 Updating user profile with display name...");
+        await updateProfile(userCredential.user, {
+          displayName: name
+        });
+        console.log("✅ User profile updated!");
       }
-      return false
+      
+      // Firebase Auth will automatically trigger onAuthStateChanged
+      // which will update our user state
+      return true;
+      
     } catch (error) {
-      console.error("Registration error:", error)
-      return false
+      console.error("💥 Registration error:", error);
+      console.error("💥 Error details:", {
+        message: (error as any)?.message || 'Unknown error',
+        code: (error as any)?.code || 'No code',
+      });
+      
+      // Handle specific error cases
+      if ((error as any)?.code === 'auth/email-already-in-use') {
+        console.log("ℹ️ Email already in use");
+        return false;
+      }
+      
+      if ((error as any)?.code === 'auth/weak-password') {
+        console.log("ℹ️ Password is too weak");
+        return false;
+      }
+      
+      if ((error as any)?.code === 'auth/invalid-email') {
+        console.log("ℹ️ Invalid email");
+        return false;
+      }
+      
+      return false;
     }
   }
 
   const logout = async (): Promise<void> => {
+    console.log("🚀 logout called (using Firebase Auth directly)");
+    
     try {
-      // Call backend logout to revoke tokens (if available)
       if (auth) {
-        await authFunctions.logout({})
-        // Sign out on client
-        await signOut(auth)
+        console.log("🔧 Signing out...");
+        await signOut(auth);
+        console.log("✅ Signed out successfully!");
       }
-      setUser(null)
+      setUser(null);
     } catch (error) {
-      console.error("Logout error:", error)
-      // Force local logout even if backend call fails
-      if (auth) {
-        await signOut(auth)
-      }
-      setUser(null)
+      console.error("💥 Logout error:", error);
+      // Force local logout even if signOut fails
+      setUser(null);
     }
   }
 
@@ -306,66 +283,61 @@ For now, please use email/password authentication.`);
         return
       }
 
-      console.log("Rendering Google Sign-In button...");
+      console.log("🎯 Creating Google Sign-In button that uses Firebase Auth directly...");
 
-      // Load Google Identity Services script if not already loaded
-      if (typeof window !== 'undefined' && !window.google) {
-        await new Promise<void>((resolve, reject) => {
-          const script = document.createElement('script');
-          script.src = 'https://accounts.google.com/gsi/client';
-          script.async = true;
-          script.defer = true;
-          script.onload = () => {
-            console.log("Google script loaded for button");
-            resolve();
-          };
-          script.onerror = (error) => {
-            console.error("Failed to load Google script for button:", error);
-            reject(new Error('Failed to load Google Sign-In'));
-          };
-          document.head.appendChild(script);
-        });
-      }
+      // Create a button element that triggers our loginWithGoogle function
+      const button = document.createElement('button');
+      
+      // Create the Google SVG icon
+      const googleSvg = `
+        <svg class="w-5 h-5" viewBox="0 0 24 24" style="width: 20px; height: 20px; margin-right: 8px;">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+      `;
+      
+      button.innerHTML = `${googleSvg}Sign in with Google`;
+      button.className = 'google-signin-button';
+      button.style.cssText = `
+        background: white;
+        color: #757575;
+        border: 1px solid #dadce0;
+        padding: 12px 16px;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 200px;
+        transition: all 0.2s ease;
+        font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+      `;
+      
+      // Add hover effects
+      button.onmouseenter = () => {
+        button.style.boxShadow = '0 1px 2px 0 rgba(60,64,67,.30), 0 1px 3px 1px rgba(60,64,67,.15)';
+        button.style.backgroundColor = '#f8f9fa';
+      };
+      
+      button.onmouseleave = () => {
+        button.style.boxShadow = 'none';
+        button.style.backgroundColor = 'white';
+      };
+      
+      button.onclick = async () => {
+        console.log("🖱️ Google button clicked - calling loginWithGoogle...");
+        await loginWithGoogle();
+      };
 
-      // Wait for initialization
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      if (typeof window !== 'undefined' && window.google && window.google.accounts) {
-        window.google.accounts.id.initialize({
-          client_id: googleClientId,
-          callback: async (response: { credential: string }) => {
-            try {
-              console.log("Google button callback triggered");
-              console.log("Button credential received:", !!response.credential);
-              
-              const result = await authFunctions.loginWithGoogle({ idToken: response.credential });
-              const data = result.data as any;
-              
-              console.log("Button Firebase function response:", data);
-              
-              if (data.success && data.customToken) {
-                await signInWithCustomToken(auth, data.customToken);
-                console.log("Google button Sign-In successful!");
-              } else {
-                console.error("Google button sign-in failed:", data);
-                alert("Google Sign-In failed. Please try again or use email/password authentication.");
-              }
-            } catch (error) {
-              console.error("Google button callback error:", error);
-              alert("Google Sign-In failed. Please try again or use email/password authentication.");
-            }
-          }
-        });
-
-        window.google.accounts.id.renderButton(element, {
-          theme: "outline",
-          size: "large"
-        } as any);
-        
-        console.log("Google button rendered successfully");
-      } else {
-        console.error("Google accounts not available for button rendering");
-      }
+      // Replace the element's content with our button
+      element.innerHTML = '';
+      element.appendChild(button);
+      
+      console.log("✅ Google button rendered successfully");
     } catch (error) {
       console.error("Error rendering Google button:", error);
     }

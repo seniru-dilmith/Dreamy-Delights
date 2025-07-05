@@ -1,6 +1,7 @@
 const admin = require('firebase-admin');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 
 // Initialize Firebase Admin if not already initialized
 if (!admin.apps.length) {
@@ -17,18 +18,18 @@ const db = admin.firestore();
 // 📝 EDIT THIS ARRAY - Add your admins here
 const ADMINS_TO_CREATE = [
   {
-    username: 'admin_username',
-    email: 'admin@dreamydelights.com',
-    password: 'password',
-    role: 'custom',
+    username: 'testadmin',
+    email: 'testadmin@dreamydelights.com',
+    password: 'testpass123',
+    role: 'admin',
     permissions: {
-      manage_products: false,
-      manage_orders: false,
-      manage_users: false,
-      manage_testimonials: false,
-      manage_content: false,
-      view_analytics: false,
-      super_admin: false
+      manage_products: true,
+      manage_orders: true,
+      manage_users: true,
+      manage_testimonials: true,
+      manage_content: true,
+      view_analytics: true,
+      super_admin: true
     }
   },
 ];
@@ -40,6 +41,29 @@ function generateAdminId(username) {
   const timestamp = Date.now();
   const randomChars = crypto.randomBytes(3).toString('hex');
   return `${username}-${timestamp}-${randomChars}`;
+}
+
+/**
+ * Generate JWT token for an admin
+ */
+function generateJWT(adminData) {
+  const permissionsArray = Object.entries(adminData.permissions || {})
+    .filter(([key, value]) => value === true)
+    .map(([key]) => key);
+
+  const token = jwt.sign(
+    {
+      id: adminData.id,
+      username: adminData.username,
+      role: adminData.role,
+      permissions: permissionsArray,
+      type: 'admin',
+    },
+    process.env.ADMIN_JWT_SECRET || 'your-super-secure-jwt-secret-change-this-in-production',
+    { expiresIn: '24h' }
+  );
+
+  return token;
 }
 
 async function createAdmins() {
@@ -152,10 +176,19 @@ async function createAdmins() {
   results.details.forEach(admin => {
     if (admin.action === 'created' || admin.action === 'updated') {
       const config = ADMINS_TO_CREATE.find(a => a.username === admin.username);
+      const adminData = {
+        id: admin.id,
+        username: admin.username,
+        role: admin.role,
+        permissions: config.permissions
+      };
+      const jwtToken = generateJWT(adminData);
+      
       console.log(`👤 ${admin.username}`);
       console.log(`   📧 Email: ${admin.email}`);
       console.log(`   🔑 Password: ${config.password}`);
       console.log(`   🎭 Role: ${admin.role}`);
+      console.log(`   🎫 JWT Token: ${jwtToken}`);
       console.log('');
     }
   });

@@ -2,8 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
-import Navbar from "./components/Navbar"
-import Footer from "./components/Footer"
+import ConditionalLayout from "./components/ConditionalLayout"
 import { CartProvider } from "./context/CartContext"
 import { AuthProvider } from "./context/AuthContext"
 
@@ -97,9 +96,9 @@ export default function RootLayout({
       <body className={inter.className}>
         <AuthProvider>
           <CartProvider>
-            <Navbar />
-            <main>{children}</main>
-            <Footer />
+            <ConditionalLayout>
+              {children}
+            </ConditionalLayout>
           </CartProvider>
         </AuthProvider>
       </body>

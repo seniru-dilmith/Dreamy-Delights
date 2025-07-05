@@ -41,25 +41,20 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const checkExistingSession = async () => {
-    console.log('AdminContext: Checking existing session...');
     try {
       const encryptedToken = localStorage.getItem(ADMIN_TOKEN_KEY);
       if (!encryptedToken) {
-        console.log('AdminContext: No encrypted token found in localStorage');
         setLoading(false);
         return;
       }
 
-      console.log('AdminContext: Found encrypted token, decrypting...');
       // Decrypt token
       const tokenData = JSON.parse(ClientEncryption.decrypt(encryptedToken));
       
       // Check if token is expired (4 hours from storage timestamp)
       const tokenAge = Date.now() - tokenData.timestamp;
-      console.log('AdminContext: Token age:', tokenAge, 'ms (max:', ADMIN_SESSION_DURATION, 'ms)');
       
       if (tokenAge > ADMIN_SESSION_DURATION) {
-        console.log('AdminContext: Token expired, removing from localStorage');
         localStorage.removeItem(ADMIN_TOKEN_KEY);
         setLoading(false);
         return;
@@ -67,18 +62,15 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
       // Decode JWT to check expiration and get admin data
       try {
-        console.log('AdminContext: Decoding JWT...');
         const tokenParts = tokenData.token.split('.');
         if (tokenParts.length !== 3) {
           throw new Error('Invalid token format');
         }
 
         const payload = JSON.parse(atob(tokenParts[1]));
-        console.log('AdminContext: JWT payload:', payload);
         
         // Check if JWT is expired
         if (payload.exp && payload.exp * 1000 < Date.now()) {
-          console.log('AdminContext: JWT token expired');
           localStorage.removeItem(ADMIN_TOKEN_KEY);
           setLoading(false);
           return;
@@ -94,10 +86,8 @@ export function AdminProvider({ children }: { children: ReactNode }) {
           lastLogin: new Date(),
         };
 
-        console.log('AdminContext: Restoring session for admin:', adminData.username);
         setAdmin(adminData);
         setAdminToken(tokenData.token);
-        console.log('AdminContext: Session restored successfully');
       } catch (jwtError) {
         console.error('AdminContext: Error decoding JWT:', jwtError);
         localStorage.removeItem(ADMIN_TOKEN_KEY);
@@ -113,7 +103,6 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
       setLoading(true);
-      console.log('AdminContext: Starting login for username:', username);
 
       // Validate inputs before sending
       if (!username || !password) {
@@ -126,15 +115,12 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         password: password, // Send plain password, not hashed
       };
 
-      console.log('AdminContext: Calling adminLogin...');
       const result = await adminLogin(credentials) as any;
-      console.log('AdminContext: Login result:', result);
 
       const resultData = result as { success: boolean; admin?: AdminUser; token?: string };
       if (resultData.success && resultData.admin && resultData.token) {
         const { admin: adminData, token } = resultData;
         
-        console.log('AdminContext: Login successful, storing token...');
         // Encrypt and store token
         const tokenData = {
           token,
@@ -142,15 +128,12 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         };
         const encryptedToken = ClientEncryption.encrypt(JSON.stringify(tokenData));
         localStorage.setItem(ADMIN_TOKEN_KEY, encryptedToken);
-        console.log('AdminContext: Token stored in localStorage');
 
         setAdmin(adminData);
         setAdminToken(token);
-        console.log('AdminContext: Admin state updated');
         return true;
       }
 
-      console.log('AdminContext: Login failed - invalid response');
       return false;
     } catch (error) {
       console.error('AdminContext: Admin login failed:', error);

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { MapPin, Phone, Mail, Clock, Facebook, Instagram, Twitter } from "lucide-react"
+import { FaMapMarkerAlt, FaPhone, FaEnvelope, FaClock, FaFacebookF, FaInstagram, FaWhatsapp } from "react-icons/fa"
 
 export default function Footer() {
   return (
@@ -25,24 +25,24 @@ export default function Footer() {
               <div className="flex space-x-4">
                 <motion.a
                   whileHover={{ scale: 1.1 }}
-                  href="https://www.facebook.com/dreamydelights"
+                  href="https://www.facebook.com/dreamydels"
                   className="text-gray-400 hover:text-pink-400 transition-colors"
                 >
-                  <Facebook className="h-5 w-5" />
+                  <FaFacebookF className="h-5 w-5" />
                 </motion.a>
                 <motion.a
                   whileHover={{ scale: 1.1 }}
-                  href="https://www.instagram.com/dreamydelights"
+                  href="https://www.instagram.com/dreamy_dels/"
                   className="text-gray-400 hover:text-pink-400 transition-colors"
                 >
-                  <Instagram className="h-5 w-5" />
+                  <FaInstagram className="h-5 w-5" />
                 </motion.a>
                 <motion.a
                   whileHover={{ scale: 1.1 }}
-                  href="https://twitter.com/dreamydelights"
+                  href="https://wa.me/message/G54ADT3RXJYXF1"
                   className="text-gray-400 hover:text-pink-400 transition-colors"
                 >
-                  <Twitter className="h-5 w-5" />
+                  <FaWhatsapp className="h-5 w-5" />
                 </motion.a>
               </div>
             </motion.div>
@@ -67,15 +67,15 @@ export default function Footer() {
             <h4 className="text-lg font-semibold mb-4">Contact Info</h4>
             <div className="space-y-3">
               <div className="flex items-center">
-                <MapPin className="h-4 w-4 mr-3 text-pink-400" />
+                <FaMapMarkerAlt className="h-4 w-4 mr-3 text-pink-400" />
                 <span className="text-gray-300">Horana, Sri Lanka</span>
               </div>
               <div className="flex items-center">
-                <Phone className="h-4 w-4 mr-3 text-pink-400" />
-                <span className="text-gray-300">(078) 830 9127</span>
+                <FaPhone className="h-4 w-4 mr-3 text-pink-400" />
+                <span className="text-gray-300">(070) 630 9127</span>
               </div>
               <div className="flex items-center">
-                <Mail className="h-4 w-4 mr-3 text-pink-400" />
+                <FaEnvelope className="h-4 w-4 mr-3 text-pink-400" />
                 <span className="text-gray-300">sansilunikethma@gmail.com</span>
               </div>
             </div>
@@ -86,7 +86,7 @@ export default function Footer() {
             <h4 className="text-lg font-semibold mb-4">Hours</h4>
             <div className="space-y-2">
               <div className="flex items-center">
-                <Clock className="h-4 w-4 mr-3 text-pink-400" />
+                <FaClock className="h-4 w-4 mr-3 text-pink-400" />
                 <div className="text-gray-300">
                   <div>Mon-Fri: 7:00 AM-8:00 PM</div>
                   <div>Sat-Sun: 8:00 AM-9:00 PM</div>

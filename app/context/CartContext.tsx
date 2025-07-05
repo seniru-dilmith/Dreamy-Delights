@@ -30,6 +30,7 @@ type CartAction =
   | { type: "UPDATE_QUANTITY"; payload: { id: string; quantity: number } }
   | { type: "CLEAR_CART" }
   | { type: "LOAD_FROM_DATABASE"; payload: CartItem[] }
+  | { type: "LOAD_FROM_LOCALSTORAGE"; payload: CartItem[] }
   | { type: "SET_LOADING"; payload: boolean }
   | { type: "SET_ERROR"; payload: string | null }
 
@@ -43,7 +44,37 @@ const CartContext = createContext<{
   updateQuantity: (id: string, quantity: number) => Promise<void>
   clearCart: () => Promise<void>
   syncCart: () => Promise<void>
+  getItemCount: () => number
 } | null>(null)
+
+const LOCALSTORAGE_CART_KEY = "dreamy-delights-cart"
+
+// Helper functions for localStorage
+const saveCartToLocalStorage = (items: CartItem[]) => {
+  try {
+    localStorage.setItem(LOCALSTORAGE_CART_KEY, JSON.stringify(items))
+  } catch (error) {
+    console.error("Error saving cart to localStorage:", error)
+  }
+}
+
+const loadCartFromLocalStorage = (): CartItem[] => {
+  try {
+    const savedCart = localStorage.getItem(LOCALSTORAGE_CART_KEY)
+    return savedCart ? JSON.parse(savedCart) : []
+  } catch (error) {
+    console.error("Error loading cart from localStorage:", error)
+    return []
+  }
+}
+
+const clearLocalStorageCart = () => {
+  try {
+    localStorage.removeItem(LOCALSTORAGE_CART_KEY)
+  } catch (error) {
+    console.error("Error clearing cart from localStorage:", error)
+  }
+}
 
 function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
@@ -98,6 +129,13 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         total: action.payload.reduce((sum, item) => sum + item.price * item.quantity, 0),
       }
 
+    case "LOAD_FROM_LOCALSTORAGE":
+      return {
+        ...state,
+        items: action.payload,
+        total: action.payload.reduce((sum, item) => sum + item.price * item.quantity, 0),
+      }
+
     case "SET_LOADING":
       return {
         ...state,
@@ -124,10 +162,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
   })
   const { user } = useAuth()
 
+  // Load cart from localStorage on mount (for guest users)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const localCart = loadCartFromLocalStorage()
+      if (localCart.length > 0 && !user) {
+        dispatch({ type: "LOAD_FROM_LOCALSTORAGE", payload: localCart })
+      }
+    }
+  }, [])
+
   // Sync cart from database when user logs in
   const syncCart = async () => {
     if (!user) {
-      dispatch({ type: "CLEAR_CART" })
+      // Load from localStorage for guest users
+      const localCart = loadCartFromLocalStorage()
+      dispatch({ type: "LOAD_FROM_LOCALSTORAGE", payload: localCart })
       return
     }
 
@@ -135,9 +185,57 @@ export function CartProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "SET_ERROR", payload: null })
 
     try {
+      // Get the current localStorage cart
+      const localCart = loadCartFromLocalStorage()
+      
+      // Get the database cart
       const response = await getCart()
+      let dbCart: CartItem[] = []
+      
       if (response.success && response.cart) {
-        dispatch({ type: "LOAD_FROM_DATABASE", payload: response.cart.items })
+        dbCart = response.cart.items
+      }
+
+      // Merge localStorage cart with database cart if user just logged in
+      if (localCart.length > 0) {
+        console.log("🔄 Merging localStorage cart with database cart...")
+        
+        // Merge the carts (prioritize localStorage for quantities)
+        const mergedCart = [...dbCart]
+        
+        localCart.forEach(localItem => {
+          const existingIndex = mergedCart.findIndex(item => item.id === localItem.id)
+          if (existingIndex >= 0) {
+            // Item exists in both - combine quantities
+            mergedCart[existingIndex].quantity += localItem.quantity
+          } else {
+            // Item only in localStorage - add it
+            mergedCart.push(localItem)
+          }
+        })
+
+        // Save merged cart to database
+        for (const item of localCart) {
+          try {
+            await apiAddToCart(item)
+          } catch (error) {
+            console.error("Error syncing cart item to database:", error)
+          }
+        }
+
+        // Clear localStorage cart since it's now in database
+        clearLocalStorageCart()
+        
+        // Load the updated cart from database
+        const updatedResponse = await getCart()
+        if (updatedResponse.success && updatedResponse.cart) {
+          dispatch({ type: "LOAD_FROM_DATABASE", payload: updatedResponse.cart.items })
+        } else {
+          dispatch({ type: "LOAD_FROM_DATABASE", payload: mergedCart })
+        }
+      } else {
+        // No localStorage cart, just load from database
+        dispatch({ type: "LOAD_FROM_DATABASE", payload: dbCart })
       }
     } catch (error) {
       console.error("Error syncing cart:", error)
@@ -148,13 +246,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }
 
   const addToCart = async (item: CartItem) => {
+    dispatch({ type: "SET_ERROR", payload: null })
+
     if (!user) {
-      dispatch({ type: "SET_ERROR", payload: "Please log in to add items to cart" })
+      // For guest users, store in localStorage
+      dispatch({ type: "ADD_ITEM", payload: item })
+      const updatedItems = [...state.items]
+      const existingIndex = updatedItems.findIndex(existingItem => existingItem.id === item.id)
+      
+      if (existingIndex >= 0) {
+        updatedItems[existingIndex].quantity += item.quantity
+      } else {
+        updatedItems.push(item)
+      }
+      
+      saveCartToLocalStorage(updatedItems)
       return
     }
 
+    // For logged-in users, sync with database
     dispatch({ type: "SET_LOADING", payload: true })
-    dispatch({ type: "SET_ERROR", payload: null })
 
     try {
       const response = await apiAddToCart(item)
@@ -170,13 +281,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }
 
   const removeFromCart = async (id: string) => {
+    dispatch({ type: "SET_ERROR", payload: null })
+
     if (!user) {
-      dispatch({ type: "SET_ERROR", payload: "Please log in to modify cart" })
+      // For guest users, remove from localStorage
+      dispatch({ type: "REMOVE_ITEM", payload: id })
+      const updatedItems = state.items.filter(item => item.id !== id)
+      saveCartToLocalStorage(updatedItems)
       return
     }
 
+    // For logged-in users, sync with database
     dispatch({ type: "SET_LOADING", payload: true })
-    dispatch({ type: "SET_ERROR", payload: null })
 
     try {
       const response = await apiRemoveFromCart(id)
@@ -192,13 +308,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }
 
   const updateQuantity = async (id: string, quantity: number) => {
+    dispatch({ type: "SET_ERROR", payload: null })
+
     if (!user) {
-      dispatch({ type: "SET_ERROR", payload: "Please log in to modify cart" })
+      // For guest users, update in localStorage
+      dispatch({ type: "UPDATE_QUANTITY", payload: { id, quantity } })
+      const updatedItems = state.items
+        .map(item => item.id === id ? { ...item, quantity } : item)
+        .filter(item => item.quantity > 0)
+      saveCartToLocalStorage(updatedItems)
       return
     }
 
+    // For logged-in users, sync with database
     dispatch({ type: "SET_LOADING", payload: true })
-    dispatch({ type: "SET_ERROR", payload: null })
 
     try {
       const response = await updateCartItem(id, quantity)
@@ -215,10 +338,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = async () => {
     if (!user) {
+      // For guest users, clear localStorage
       dispatch({ type: "CLEAR_CART" })
+      clearLocalStorageCart()
       return
     }
 
+    // For logged-in users, clear database cart
     dispatch({ type: "SET_LOADING", payload: true })
     dispatch({ type: "SET_ERROR", payload: null })
 
@@ -233,6 +359,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } finally {
       dispatch({ type: "SET_LOADING", payload: false })
     }
+  }
+
+  const getItemCount = (): number => {
+    return state.items.reduce((total, item) => total + item.quantity, 0)
   }
 
   // Load cart when user changes
@@ -252,6 +382,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         updateQuantity,
         clearCart,
         syncCart,
+        getItemCount,
       }}
     >
       {children}

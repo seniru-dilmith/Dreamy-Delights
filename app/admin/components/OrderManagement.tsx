@@ -77,7 +77,6 @@ export default function OrderManagement() {
     try {
       const response = await adminFetchOrders();
       if (response.success) {
-        console.log('Loaded orders sample:', response.data?.[0]); // Debug: log first order
         setOrders(response.data || []);
       } else {
         console.error("Failed to load orders:", response.message);
@@ -183,13 +182,11 @@ export default function OrderManagement() {
         date = new Date(dateValue);
       }
       else {
-        console.log('Unknown date format:', dateValue);
         return 'Unknown format';
       }
       
       // Check if date is valid
       if (isNaN(date.getTime())) {
-        console.log('Invalid date after parsing:', dateValue);
         return 'Invalid Date';
       }
       
