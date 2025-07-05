@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { submitContactMessage } from "@/firebase/api"
+import { getDeliveryFAQAnswer } from "@/utils/businessConfig"
 import {
   Dialog,
   DialogContent,
@@ -328,7 +329,9 @@ export default function ContactPage() {
                   </div>
                   <div className="w-full">
                     <h4 className="font-semibold text-gray-900 mb-1 text-sm md:text-base break-words">Do you deliver?</h4>
-                    <p className="text-gray-600 text-xs md:text-sm break-words">Yes! We offer delivery within a 10km radius of our bakery. Delivery fees may apply.</p>
+                    <p className="text-gray-600 text-xs md:text-sm break-words">
+                      {getDeliveryFAQAnswer()}
+                    </p>
                   </div>
                   <div className="w-full">
                     <h4 className="font-semibold text-gray-900 mb-1 text-sm md:text-base break-words">Can I customize my order?</h4>

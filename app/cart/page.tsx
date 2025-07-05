@@ -10,10 +10,15 @@ import { Card, CardContent } from "@/components/ui/card"
 import { useCart } from "../context/CartContext"
 import { useAuth } from "../context/AuthContext"
 
+import { calculateOrderTotals, getDeliveryMessage } from "@/utils/businessConfig"
+
 export default function CartPage() {
   const { cartItems, total, loading, error, updateQuantity, removeFromCart, clearCart } = useCart()
   const { user } = useAuth()
   const router = useRouter()
+
+  // Calculate totals using utility function
+  const { taxAmount, deliveryFee, finalTotal } = calculateOrderTotals(total)
 
   const handleCheckout = () => {
     if (!user) {
@@ -186,16 +191,16 @@ export default function CartPage() {
                     </div>
                     <div className="flex justify-between">
                       <span>Tax</span>
-                      <span>Rs. {(total * 0.08).toFixed(2)}</span>
+                      <span>Rs. {taxAmount.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Delivery</span>
-                      <span>Rs. 500.00</span>
+                      <span>Rs. {deliveryFee.toFixed(2)}</span>
                     </div>
                     <div className="border-t pt-2">
                       <div className="flex justify-between font-semibold text-lg">
                         <span>Total</span>
-                        <span>Rs. {(total + total * 0.08 + 5).toFixed(2)}</span>
+                        <span>Rs. {finalTotal.toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
@@ -229,7 +234,7 @@ export default function CartPage() {
                   )}
 
                   <div className="mt-4 text-center text-sm text-gray-600">
-                    <p>Free delivery on orders over Rs. 7000</p>
+                    <p>{getDeliveryMessage()}</p>
                   </div>
                 </CardContent>
               </Card>
