@@ -58,7 +58,7 @@ export default function AboutPage() {
                 delicious and beautiful baked goods that bring joy to every celebration.
               </p>
               <p className="text-base md:text-lg text-gray-700 mb-6 md:mb-8 leading-relaxed">
-                What started in Sarah's kitchen has grown into a beloved local bakery, but our commitment to quality,
+                What started in the kitchen has grown into a beloved local bakery, but our commitment to quality,
                 creativity, and customer satisfaction remains unchanged.
               </p>
               <div className="flex items-center justify-between sm:justify-start sm:space-x-6 md:space-x-8 max-w-sm mx-auto md:mx-0">

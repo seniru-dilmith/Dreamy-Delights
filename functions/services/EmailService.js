@@ -223,7 +223,7 @@ class EmailService {
               
               <div class="contact-info">
                 <h3>📞 Get in Touch</h3>
-                <p><strong>Phone:</strong> (078) 830 9127</p>
+                <p><strong>Phone:</strong> (070) 630 9127</p>
                 <p><strong>Email:</strong> sansilunikethma@gmail.com</p>
                 <p><strong>Location:</strong> Horana, Sri Lanka</p>
                 <p><strong>Hours:</strong> Mon-Fri: 7:00 AM-8:00 PM, Sat-Sun: 8:00 AM-9:00 PM</p>
@@ -256,7 +256,7 @@ ${replyMessage ? `Our Response:\n${replyMessage}\n\n` : ""}
 We appreciate your interest in Dreamy Delights and look forward to serving you with our delicious treats!
 
 Contact Information:
-Phone: (078) 830 9127
+Phone: (070) 630 9127
 Email: sansilunikethma@gmail.com
 Location: Horana, Sri Lanka
 Hours: Mon-Fri: 7:00 AM-8:00 PM, Sat-Sun: 8:00 AM-9:00 PM
