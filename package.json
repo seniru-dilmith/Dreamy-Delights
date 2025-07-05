@@ -9,6 +9,7 @@
     "lint": "next lint",
     "start": "next start",
     "postbuild": "next-sitemap",
+    "deploy": "npm run build && firebase deploy",
     "setup-admin": "node scripts/setup-admin.js",
     "create-admin": "node scripts/create-admin-direct.js",
     "check-admins": "node scripts/check-admins.js",

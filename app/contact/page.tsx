@@ -149,7 +149,7 @@ export default function ContactPage() {
               {
                 icon: <Phone className="h-8 w-8 text-pink-500" />,
                 title: "Call Us",
-                details: "(078) 830 9127",
+                details: "(070) 630 9127",
                 subtitle: "Mon-Sun 7:00 AM - 9:00 PM"
               },
               {
@@ -248,7 +248,7 @@ export default function ContactPage() {
                     <Input
                       id="phone"
                       type="tel"
-                      placeholder="(078) 123 4567"
+                      placeholder="(070) 123 4567"
                       className="mt-1 w-full"
                       value={formData.phone}
                       onChange={handleInputChange}
@@ -366,7 +366,7 @@ export default function ContactPage() {
                 variant="outline"
                 className="border-white hover:bg-white text-purple-600 h-12 w-full sm:w-auto min-w-0"
               >
-                <a href="tel:0788309127" className="truncate">Call Now</a>
+                <a href="tel:0706309127" className="truncate">Call Now</a>
               </Button>
             </div>
           </motion.div>
