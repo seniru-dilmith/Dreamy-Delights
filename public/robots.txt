@@ -1,0 +1,11 @@
+# *
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api
+
+# Host
+Host: https://thedreamydelights.com
+
+# Sitemaps
+Sitemap: https://thedreamydelights.com/sitemap.xml

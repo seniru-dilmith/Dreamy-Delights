@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useRef, useEffect, Suspense } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "../../context/AuthContext"
+import AuthRedirectHandler from "../components/AuthRedirectHandler"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -19,24 +20,133 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [redirectPath, setRedirectPath] = useState("/")
+  const googleButtonRef = useRef<HTMLDivElement>(null)
 
-  const { login } = useAuth()
-  const router = useRouter()
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen pt-20 pb-16 flex items-center justify-center bg-gradient-to-br from-pink-50 to-purple-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-pink-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <AuthRedirectHandler onRedirectPath={setRedirectPath}>
+        {({ router, auth }) => (
+          <LoginForm
+            email={email}
+            setEmail={setEmail}
+            password={password}
+            setPassword={setPassword}
+            showPassword={showPassword}
+            setShowPassword={setShowPassword}
+            loading={loading}
+            setLoading={setLoading}
+            error={error}
+            setError={setError}
+            router={router}
+            auth={auth}
+            redirectPath={redirectPath}
+            googleButtonRef={googleButtonRef}
+          />
+        )}
+      </AuthRedirectHandler>
+    </Suspense>
+  )
+}
+
+interface LoginFormProps {
+  email: string
+  setEmail: (email: string) => void
+  password: string
+  setPassword: (password: string) => void
+  showPassword: boolean
+  setShowPassword: (show: boolean) => void
+  loading: boolean
+  setLoading: (loading: boolean) => void
+  error: string
+  setError: (error: string) => void
+  router: ReturnType<typeof useRouter>
+  auth: ReturnType<typeof useAuth>
+  redirectPath: string
+  googleButtonRef: React.RefObject<HTMLDivElement | null>
+}
+
+function LoginForm({
+  email,
+  setEmail,
+  password,
+  setPassword,
+  showPassword,
+  setShowPassword,
+  loading,
+  setLoading,
+  error,
+  setError,
+  router,
+  auth,
+  redirectPath,
+  googleButtonRef
+}: LoginFormProps) {
+  const { login, loginWithGoogle, renderGoogleButton, user, loading: authLoading } = auth
+
+  // Redirect to home if user is already authenticated
+  useEffect(() => {
+    if (!authLoading && user) {
+      console.log("🔄 User is authenticated, redirecting to home page");
+      router.push('/');
+    }
+  }, [user, authLoading, router]);
+
+  // Initialize Google button
+  useEffect(() => {
+    if (googleButtonRef.current) {
+      renderGoogleButton(googleButtonRef.current);
+    }
+  }, [renderGoogleButton]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError("")
 
+    console.log("🚀 handleSubmit called with:", { email, redirectPath: '/' });
+
     try {
+      console.log("🔄 Calling login function...");
       const success = await login(email, password)
+      console.log("📋 Login result:", success);
+      
       if (success) {
-        router.push("/")
+        console.log("✅ Login successful, attempting redirect to /");
+        router.push('/')
+        console.log("🔄 Router.push called");
       } else {
+        console.log("❌ Login failed");
         setError("Invalid email or password")
       }
     } catch (err) {
+      console.error("💥 Login error in handleSubmit:", err);
       setError("An error occurred. Please try again.")
+    } finally {
+      setLoading(false)
+      console.log("🏁 Login process finished");
+    }
+  }
+
+  const handleGoogleLogin = async () => {
+    setLoading(true)
+    setError("")
+    try {
+      const success = await loginWithGoogle()
+      if (success) {
+        router.push('/')
+      } else {
+        setError("Google login failed. Please try again.")
+      }
+    } catch (err) {
+      setError("An error occurred with Google login.")
     } finally {
       setLoading(false)
     }
@@ -105,6 +215,22 @@ export default function LoginPage() {
               </Button>
             </form>
 
+            <div className="mt-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-2 text-gray-500">Or continue with</span>
+                </div>
+              </div>
+
+              <div className="flex justify-center mt-4">
+                {/* Google Identity Services button will be rendered here */}
+                <div ref={googleButtonRef}/>
+              </div>
+            </div>
+
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
                 Don't have an account?{" "}
@@ -112,10 +238,6 @@ export default function LoginPage() {
                   Sign up
                 </Link>
               </p>
-            </div>
-
-            <div className="mt-4 text-center">
-              <p className="text-xs text-gray-500">Demo: Use admin@dreamydelights.com for admin access</p>
             </div>
           </CardContent>
         </Card>

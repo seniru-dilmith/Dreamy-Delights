@@ -3,13 +3,49 @@
 import { motion } from "framer-motion"
 import Image from "next/image"
 import Link from "next/link"
-import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { Minus, Plus, Trash2, ShoppingBag, Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { useCart } from "../context/CartContext"
+import { useAuth } from "../context/AuthContext"
+
+import { calculateOrderTotals, getDeliveryMessage } from "@/utils/businessConfig"
 
 export default function CartPage() {
-  const { cartItems, total, updateQuantity, removeFromCart, clearCart } = useCart()
+  const { cartItems, total, loading, error, updateQuantity, removeFromCart, clearCart } = useCart()
+  const { user } = useAuth()
+  const router = useRouter()
+
+  // Calculate totals using utility function
+  const { taxAmount, deliveryFee, finalTotal } = calculateOrderTotals(total)
+
+  const handleCheckout = () => {
+    // Allow guest users to proceed to checkout, they'll be prompted to login there
+    router.push("/checkout")
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen pt-20 pb-16 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-pink-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your cart...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen pt-20 pb-16 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()}>Try Again</Button>
+        </div>
+      </div>
+    )
+  }
 
   if (cartItems.length === 0) {
     return (
@@ -54,7 +90,7 @@ export default function CartPage() {
                     <CardContent className="p-6">
                       <div className="flex items-center space-x-4">
                         <Image
-                          src={item.image || "/placeholder.svg"}
+                          src={item.image || "/logo-large.svg"}
                           alt={item.name}
                           width={80}
                           height={80}
@@ -75,6 +111,7 @@ export default function CartPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => updateQuantity(item.id, Math.max(0, item.quantity - 1))}
+                                disabled={loading}
                               >
                                 <Minus className="h-4 w-4" />
                               </Button>
@@ -83,17 +120,19 @@ export default function CartPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                disabled={loading}
                               >
                                 <Plus className="h-4 w-4" />
                               </Button>
                             </div>
                             <div className="flex items-center space-x-4">
-                              <span className="text-lg font-semibold">${(item.price * item.quantity).toFixed(2)}</span>
+                              <span className="text-lg font-semibold">Rs.{(item.price * item.quantity).toFixed(2)}</span>
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => removeFromCart(item.id)}
                                 className="text-red-500 hover:text-red-700"
+                                disabled={loading}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -108,7 +147,7 @@ export default function CartPage() {
             </div>
 
             <div className="mt-6 flex justify-between">
-              <Button variant="outline" onClick={clearCart}>
+              <Button variant="outline" onClick={clearCart} disabled={loading}>
                 Clear Cart
               </Button>
               <Button asChild variant="outline">
@@ -131,30 +170,50 @@ export default function CartPage() {
                   <div className="space-y-2 mb-4">
                     <div className="flex justify-between">
                       <span>Subtotal</span>
-                      <span>${total.toFixed(2)}</span>
+                      <span>Rs. {total.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Tax</span>
-                      <span>${(total * 0.08).toFixed(2)}</span>
+                      <span>Rs. {taxAmount.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Delivery</span>
-                      <span>$5.00</span>
+                      <span>Rs. {deliveryFee.toFixed(2)}</span>
                     </div>
                     <div className="border-t pt-2">
                       <div className="flex justify-between font-semibold text-lg">
                         <span>Total</span>
-                        <span>${(total + total * 0.08 + 5).toFixed(2)}</span>
+                        <span>Rs. {finalTotal.toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
 
-                  <Button asChild className="w-full bg-pink-500 hover:bg-pink-600" size="lg">
-                    <Link href="/checkout">Proceed to Checkout</Link>
+                  <Button 
+                    onClick={handleCheckout}
+                    className="w-full bg-pink-500 hover:bg-pink-600" 
+                    size="lg"
+                    disabled={loading}
+                  >
+                    Proceed to Checkout
                   </Button>
 
+                  {!user && (
+                    <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <p className="text-sm text-blue-800 text-center">
+                        <Lock className="h-4 w-4 inline mr-1" />
+                        You'll be prompted to sign in before completing your order.
+                        <Link 
+                          href={`/auth/register?redirect=${encodeURIComponent("/checkout")}`}
+                          className="text-blue-600 hover:text-blue-800 underline ml-1"
+                        >
+                          New customer? Create an account
+                        </Link>
+                      </p>
+                    </div>
+                  )}
+
                   <div className="mt-4 text-center text-sm text-gray-600">
-                    <p>Free delivery on orders over $50</p>
+                    <p>{getDeliveryMessage()}</p>
                   </div>
                 </CardContent>
               </Card>
