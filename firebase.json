@@ -31,19 +31,66 @@
     ],
     "rewrites": [
       {
-        "source": "**",
+        "source": "/",
         "destination": "/index.html"
-      }
-    ],
-    "redirects": [
+      },
       {
-        "source": "/404.html",
-        "destination": "/not-found",
-        "type": 301
+        "source": "/menu",
+        "destination": "/menu/index.html"
+      },
+      {
+        "source": "/about",
+        "destination": "/about/index.html"
+      },
+      {
+        "source": "/contact",
+        "destination": "/contact/index.html"
+      },
+      {
+        "source": "/cart",
+        "destination": "/cart/index.html"
+      },
+      {
+        "source": "/checkout",
+        "destination": "/checkout/index.html"
+      },
+      {
+        "source": "/auth/login",
+        "destination": "/auth/login/index.html"
+      },
+      {
+        "source": "/auth/register",
+        "destination": "/auth/register/index.html"
+      },
+      {
+        "source": "/auth/test",
+        "destination": "/auth/test/index.html"
+      },
+      {
+        "source": "/admin",
+        "destination": "/admin/index.html"
+      },
+      {
+        "source": "/admin/dashboard",
+        "destination": "/admin/dashboard/index.html"
+      },
+      {
+        "source": "/admin/debug",
+        "destination": "/admin/debug/index.html"
+      },
+      {
+        "source": "/admin/login",
+        "destination": "/admin/login/index.html"
       }
     ],
     "cleanUrls": true,
     "trailingSlash": false,
+    "errorHandlers": [
+      {
+        "type": "404",
+        "file": "/404.html"
+      }
+    ],
     "headers": [
       {
         "source": "**/*.@(js|css)",
