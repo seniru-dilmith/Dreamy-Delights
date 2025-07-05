@@ -1,14 +1,111 @@
 "use client"
 
+import { useState } from "react"
 import { motion } from "framer-motion"
-import { MapPin, Phone, Mail, Clock, Send } from "lucide-react"
+import { MapPin, Phone, Mail, Clock, Send, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
+import { useToast } from "@/hooks/use-toast"
+import { submitContactMessage } from "@/firebase/api"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 export default function ContactPage() {
+  const { toast } = useToast()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false)
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    subject: '',
+    message: ''
+  })
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [id]: value
+    }))
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (isSubmitting) return
+
+    // Validate required fields
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.subject || !formData.message) {
+      toast({
+        title: "Missing Required Fields",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(formData.email)) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      await submitContactMessage({
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone?.trim() || undefined,
+        subject: formData.subject.trim(),
+        message: formData.message.trim(),
+      })
+
+      // Show success dialog
+      setShowSuccessDialog(true)
+
+      toast({
+        title: "🌟 Message Received!",
+        description: "Thank you for reaching out to Dreamy Delights! We've received your message and our team will get back to you within 24 hours. We appreciate your interest in our sweet creations!",
+        duration: 6000,
+      })
+
+      // Reset form
+      setFormData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        subject: '',
+        message: ''
+      })
+    } catch (error) {
+      console.error('Error submitting contact message:', error)
+      toast({
+        title: "Failed to Send Message",
+        description: "There was an error sending your message. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
   return (
     <div className="min-h-screen overflow-x-hidden">
       {/* Hero Section */}
@@ -102,38 +199,47 @@ export default function ContactPage() {
             >
               <Card className="p-4 md:p-8 w-full">
                 <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 md:mb-6 break-words">Send Us a Message</h3>
-                <form className="space-y-4 md:space-y-6 w-full">
+                <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6 w-full">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                     <div className="w-full min-w-0">
-                      <Label htmlFor="firstName" className="text-gray-700">First Name</Label>
+                      <Label htmlFor="firstName" className="text-gray-700">First Name *</Label>
                       <Input
                         id="firstName"
                         type="text"
                         placeholder="John"
                         className="mt-1 w-full"
+                        value={formData.firstName}
+                        onChange={handleInputChange}
                         required
+                        disabled={isSubmitting}
                       />
                     </div>
                     <div className="w-full min-w-0">
-                      <Label htmlFor="lastName" className="text-gray-700">Last Name</Label>
+                      <Label htmlFor="lastName" className="text-gray-700">Last Name *</Label>
                       <Input
                         id="lastName"
                         type="text"
                         placeholder="Doe"
                         className="mt-1 w-full"
+                        value={formData.lastName}
+                        onChange={handleInputChange}
                         required
+                        disabled={isSubmitting}
                       />
                     </div>
                   </div>
                   
                   <div className="w-full min-w-0">
-                    <Label htmlFor="email" className="text-gray-700">Email</Label>
+                    <Label htmlFor="email" className="text-gray-700">Email *</Label>
                     <Input
                       id="email"
                       type="email"
                       placeholder="john@example.com"
                       className="mt-1 w-full"
+                      value={formData.email}
+                      onChange={handleInputChange}
                       required
+                      disabled={isSubmitting}
                     />
                   </div>
 
@@ -144,27 +250,36 @@ export default function ContactPage() {
                       type="tel"
                       placeholder="(078) 123 4567"
                       className="mt-1 w-full"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      disabled={isSubmitting}
                     />
                   </div>
 
                   <div className="w-full min-w-0">
-                    <Label htmlFor="subject" className="text-gray-700">Subject</Label>
+                    <Label htmlFor="subject" className="text-gray-700">Subject *</Label>
                     <Input
                       id="subject"
                       type="text"
                       placeholder="Custom cake order"
                       className="mt-1 w-full"
+                      value={formData.subject}
+                      onChange={handleInputChange}
                       required
+                      disabled={isSubmitting}
                     />
                   </div>
 
                   <div className="w-full min-w-0">
-                    <Label htmlFor="message" className="text-gray-700">Message</Label>
+                    <Label htmlFor="message" className="text-gray-700">Message *</Label>
                     <Textarea
                       id="message"
                       placeholder="Tell us about your order or inquiry..."
                       className="mt-1 min-h-32 w-full resize-none"
+                      value={formData.message}
+                      onChange={handleInputChange}
                       required
+                      disabled={isSubmitting}
                     />
                   </div>
 
@@ -172,9 +287,10 @@ export default function ContactPage() {
                     type="submit" 
                     size="lg" 
                     className="w-full bg-pink-500 hover:bg-pink-600 h-12"
+                    disabled={isSubmitting}
                   >
                     <Send className="mr-2 h-4 w-4 md:h-5 md:w-5" />
-                    Send Message
+                    {isSubmitting ? 'Sending...' : 'Send Message'}
                   </Button>
                 </form>
               </Card>
@@ -256,6 +372,37 @@ export default function ContactPage() {
           </motion.div>
         </div>
       </section>
+
+      {/* Success Dialog */}
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            </div>
+            <DialogTitle className="text-center text-xl font-semibold text-gray-900">
+              Thank You for Reaching Out! 🌟
+            </DialogTitle>
+            <DialogDescription className="text-center text-gray-600 mt-4 leading-relaxed">
+              We've successfully received your message and truly appreciate you taking the time to contact Dreamy Delights. 
+              <br /><br />
+              Our dedicated team will carefully review your inquiry and get back to you within 24 hours. We're excited to help make your sweet dreams come true!
+              <br /><br />
+              <span className="text-sm font-medium text-purple-600">
+                Keep an eye on your inbox for our response! 📧
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center mt-6">
+            <Button 
+              onClick={() => setShowSuccessDialog(false)}
+              className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white px-8 py-2"
+            >
+              Perfect! 
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
