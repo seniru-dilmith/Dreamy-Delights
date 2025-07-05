@@ -12,8 +12,15 @@ interface ConditionalLayoutProps {
 export default function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname()
   const [is404, setIs404] = useState(false)
+  const [mounted, setMounted] = useState(false)
   
   useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
+    
     // Check if this is a 404 page based on document or known routes
     const checkIs404 = () => {
       // Method 1: Check if pathname indicates not-found
@@ -34,8 +41,17 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
     }
     
     setIs404(checkIs404())
-  }, [pathname])
+  }, [pathname, mounted])
   
+  // Prevent hydration mismatch during initial render
+  if (!mounted) {
+    return (
+      <>
+        <main className="min-h-screen">{children}</main>
+      </>
+    )
+  }
+
   // Hide navbar and footer on 404 page
   if (is404) {
     return <main className="min-h-screen">{children}</main>
