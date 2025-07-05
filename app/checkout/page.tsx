@@ -22,6 +22,7 @@ export default function CheckoutPage() {
   const [orderSuccess, setOrderSuccess] = useState(false)
   const [orderId, setOrderId] = useState("")
   const [showConfirmationModal, setShowConfirmationModal] = useState(false)
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false)
   const [error, setError] = useState("")
 
   const [formData, setFormData] = useState({
@@ -38,11 +39,14 @@ export default function CheckoutPage() {
   })
 
   useEffect(() => {
-    // Redirect to cart if no items or not authenticated
+    // Redirect to cart if no items
     if (cartItems.length === 0 && !orderSuccess) {
       router.push("/cart")
-    } else if (!user && !orderSuccess) {
-      router.push("/auth/login?redirect=" + encodeURIComponent("/checkout"))
+    }
+    
+    // Check if user needs to log in when they first arrive at checkout
+    if (!user && !orderSuccess && cartItems.length > 0) {
+      setShowLoginPrompt(true)
     }
   }, [cartItems, user, router, orderSuccess])
 
@@ -69,13 +73,17 @@ export default function CheckoutPage() {
     e.preventDefault()
     
     if (!user) {
-      router.push("/auth/login")
+      setShowLoginPrompt(true)
       return
     }
 
     // Clear any previous errors and show confirmation modal
     setError("")
     setShowConfirmationModal(true)
+  }
+
+  const handleLoginRedirect = () => {
+    router.push("/auth/login?redirect=" + encodeURIComponent("/checkout"))
   }
 
   const handleConfirmOrder = async (contactData: { phone: string; notes: string }) => {
@@ -355,6 +363,43 @@ export default function CheckoutPage() {
           total={finalTotal}
           error={error}
         />
+
+        {/* Login Prompt Modal */}
+        {showLoginPrompt && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-white rounded-lg p-6 max-w-md mx-4"
+            >
+              <div className="text-center">
+                <div className="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <User className="h-8 w-8 text-pink-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Login Required</h3>
+                <p className="text-gray-600 mb-6">
+                  You need to log in to complete your order. Don't worry, your cart items are saved!
+                </p>
+                <div className="space-y-3">
+                  <Button 
+                    onClick={handleLoginRedirect} 
+                    className="w-full bg-pink-500 hover:bg-pink-600"
+                  >
+                    Login to Continue
+                  </Button>
+                  <Button 
+                    onClick={() => setShowLoginPrompt(false)} 
+                    variant="outline" 
+                    className="w-full"
+                  >
+                    Continue Shopping
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
       </div>
     </div>
   )
