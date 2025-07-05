@@ -23,10 +23,8 @@ export default function HomePage() {
         const productResponse = await fetchFeaturedProducts();
         
         if (productResponse.success && productResponse.data.length > 0) {
-          console.log(`Successfully loaded ${productResponse.data.length} products from API`);
           setFeaturedProducts(productResponse.data);
         } else {
-          console.log('No products found in API');
           setFeaturedProducts([]);
         }
       } catch (error) {
@@ -41,10 +39,8 @@ export default function HomePage() {
         const testimonialResponse = await fetchFeaturedTestimonials();
         
         if (testimonialResponse.success && testimonialResponse.data.length > 0) {
-          console.log(`Successfully loaded ${testimonialResponse.data.length} testimonials from API`);
           setTestimonials(testimonialResponse.data);
         } else {
-          console.log('No testimonials found in API or API error:', testimonialResponse.error || 'Unknown error');
           setTestimonials([]);
         }
       } catch (error) {

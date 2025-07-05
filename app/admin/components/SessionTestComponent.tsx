@@ -42,7 +42,6 @@ export default function SessionTestComponent() {
     }
     
     setSessionInfo(info);
-    console.log('Session Info:', info);
   };
 
   useEffect(() => {
@@ -50,7 +49,6 @@ export default function SessionTestComponent() {
   }, [admin, isAuthenticated, loading]);
 
   const testRefresh = () => {
-    console.log('Testing page refresh...');
     window.location.reload();
   };
 
