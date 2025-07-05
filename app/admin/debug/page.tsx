@@ -14,14 +14,11 @@ export default function AdminDebug() {
     // Check token
     const currentToken = getAdminToken();
     setToken(currentToken);
-    console.log('🔧 Debug: Admin token:', currentToken ? 'Available' : 'Not available');
   }, []);
 
   const testProductsAPI = async () => {
-    console.log('🔧 Debug: Testing products API...');
     try {
       const result = await adminFetchProducts();
-      console.log('🔧 Debug: Products result:', result);
       setApiResult(result);
       if (result.success) {
         setProducts(result.data || []);

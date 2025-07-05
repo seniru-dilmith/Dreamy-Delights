@@ -76,9 +76,7 @@ export default function ProductManagement() {
   const loadProducts = async () => {
     setIsLoading(true);
     try {
-      console.log('🔧 ProductManagement: Loading products...');
       const response = await adminFetchProducts();
-      console.log('🔧 ProductManagement: Products response:', response);
       
       if (response.success) {
         // Normalize product data to ensure consistent structure
@@ -97,31 +95,9 @@ export default function ProductManagement() {
             updatedAt: product.updatedAt || new Date().toISOString(),
           };
           
-          console.log('🔧 ProductManagement: Normalized product:', {
-            original: {
-              id: product.id,
-              name: product.name,
-              imageUrl: product.imageUrl,
-              image: product.image,
-              stock: product.stock,
-              active: product.active
-            },
-            normalized: {
-              id: normalized.id,
-              name: normalized.name,
-              imageUrl: normalized.imageUrl,
-              stock: normalized.stock,
-              active: normalized.active
-            }
-          });
-          
           return normalized;
         });
         
-        console.log('🔧 ProductManagement: Products loaded successfully:', {
-          count: normalizedProducts.length,
-          products: normalizedProducts.map((p: Product) => ({ id: p.id, name: p.name }))
-        });
         setProducts(normalizedProducts);
       } else {
         console.error("🔧 ProductManagement: Failed to load products:", response.message);
@@ -153,18 +129,6 @@ export default function ProductManagement() {
     setIsLoading(true);
 
     try {
-      console.log('🔧 ProductManagement: Starting form submission');
-      console.log('📝 Form data:', formData);
-      console.log('🖼️ Image file:', imageFile ? {
-        name: imageFile.name,
-        size: imageFile.size,
-        type: imageFile.type
-      } : 'No image');
-      console.log('✏️ Editing product:', editingProduct ? {
-        id: editingProduct.id,
-        name: editingProduct.name
-      } : 'New product');
-
       // Sanitize inputs
       const sanitizedData = {
         ...formData,
@@ -172,22 +136,18 @@ export default function ProductManagement() {
         description: InputSanitizer.sanitizeForDatabase(formData.description),
       };
 
-      console.log('🧹 Sanitized data:', sanitizedData);
-
       let finalData: typeof sanitizedData & { imageUrl?: string } = { ...sanitizedData };
 
       // Handle image upload if there's a new image file
       const hasNewImageFile = imageFile && imageFile instanceof File && imageFile.size > 0;
       
       if (hasNewImageFile) {
-        console.log('📸 Uploading image to Firebase Storage...');
         try {
           const uploadResult = await ImageUploadService.uploadImage(
             imageFile,
             'products',
             editingProduct ? `${editingProduct.id}-${Date.now()}` : undefined
           );
-          console.log('✅ Image uploaded successfully:', uploadResult);
           finalData.imageUrl = uploadResult.url;
         } catch (uploadError) {
           console.error('❌ Image upload failed:', uploadError);
@@ -196,22 +156,15 @@ export default function ProductManagement() {
         }
       }
 
-      console.log('� Final data to send:', finalData);
-
       // Send product data (always as JSON now)
       let response;
       if (editingProduct) {
-        console.log('🔄 Calling adminUpdateProductJSON');
         response = await adminUpdateProductJSON(editingProduct.id, finalData);
       } else {
-        console.log('➕ Calling adminCreateProductJSON');
         response = await adminCreateProductJSON(finalData);
       }
 
-      console.log('📨 API Response:', response);
-
       if (response.success) {
-        console.log('✅ Product operation successful');
         // Reload products to get the latest data
         await loadProducts();
         resetForm();
@@ -233,16 +186,6 @@ export default function ProductManagement() {
   };
 
   const handleEdit = (product: Product) => {
-    console.log('🔧 ProductManagement: handleEdit called with product:', {
-      id: product.id,
-      name: product.name,
-      category: product.category,
-      price: product.price,
-      featured: product.featured,
-      active: product.active,
-      fullProduct: product
-    });
-    
     setEditingProduct(product);
     setFormData({
       name: product.name || "",
@@ -257,16 +200,6 @@ export default function ProductManagement() {
     // Reset image file state when editing existing product
     setImageFile(null);
     setIsDialogOpen(true);
-    
-    console.log('🔧 ProductManagement: Form data set to:', {
-      name: product.name || "",
-      description: product.description || "",
-      price: product.price || 0,
-      category: product.category || "",
-      stock: product.stock || 0,
-      featured: product.featured || false,
-      active: product.active !== undefined ? product.active : true,
-    });
   };
 
   const handleDelete = async (productId: string) => {
@@ -289,22 +222,14 @@ export default function ProductManagement() {
 
   const toggleFeatured = async (productId: string, currentFeatured: boolean) => {
     try {
-      console.log('🔧 ProductManagement: toggleFeatured called:', {
-        productId,
-        currentFeatured,
-        newFeatured: !currentFeatured
-      });
-      
       // Use JSON update instead of FormData for simple field updates
       const updateData = {
         featured: !currentFeatured
       };
       
-      console.log('🔧 ProductManagement: Sending JSON update for featured toggle:', updateData);
       const response = await adminUpdateProductJSON(productId, updateData);
       
       if (response.success) {
-        console.log('✅ Featured status updated successfully');
         // Reload products to reflect the change
         await loadProducts();
       } else {
@@ -334,13 +259,6 @@ export default function ProductManagement() {
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    console.log('🔧 ProductManagement: handleImageChange called:', {
-      file: file ? {
-        name: file.name,
-        size: file.size,
-        type: file.type
-      } : null
-    });
     
     if (file) {
       const validation = ImageUploadService.validateFile(file);
@@ -353,11 +271,9 @@ export default function ProductManagement() {
       const reader = new FileReader();
       reader.onload = (e) => setImagePreview(e.target?.result as string);
       reader.readAsDataURL(file);
-      console.log('🔧 ProductManagement: New image file set');
     } else {
       // Clear image file if no file selected
       setImageFile(null);
-      console.log('🔧 ProductManagement: Image file cleared');
     }
   };
 

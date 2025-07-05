@@ -164,7 +164,6 @@ export default function AdminSettings() {
       };
 
       // Here you would make an API call to save settings
-      console.log("Saving settings:", sanitizedSettings);
       
       // Show success message
       alert("Settings saved successfully!");
