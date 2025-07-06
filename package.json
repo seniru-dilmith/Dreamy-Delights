@@ -9,7 +9,7 @@
     "lint": "next lint",
     "start": "next start",
     "postbuild": "next-sitemap",
-    "deploy": "npm run build && firebase deploy",
+    "deploy": "firebase deploy",
     "deploy-functions": "cd functions && firebase deploy --only functions"
   },
   "dependencies": {
