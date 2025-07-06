@@ -108,7 +108,6 @@ function RegisterForm({
   // Redirect to home if user is already authenticated
   useEffect(() => {
     if (!authLoading && user) {
-      console.log("🔄 User is authenticated, redirecting to home page");
       router.push('/');
     }
   }, [user, authLoading, router]);
@@ -118,14 +117,12 @@ function RegisterForm({
     if (googleButtonRef.current) {
       renderGoogleButton(googleButtonRef.current);
     }
-  }, [renderGoogleButton]);
+  }, [renderGoogleButton, googleButtonRef]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError("")
-
-    console.log("🚀 handleSubmit (register) called with:", { name, email });
 
     if (password !== confirmPassword) {
       setError("Passwords do not match")
@@ -134,16 +131,11 @@ function RegisterForm({
     }
 
     try {
-      console.log("🔄 Calling register function...");
       const success = await register(name, email, password)
-      console.log("📋 Register result:", success);
       
       if (success) {
-        console.log("✅ Registration successful, attempting redirect to /");
         router.push('/')
-        console.log("🔄 Router.push called");
       } else {
-        console.log("❌ Registration failed");
         setError("Registration failed. Please try again.")
       }
     } catch (err) {
@@ -151,7 +143,6 @@ function RegisterForm({
       setError("An error occurred. Please try again.")
     } finally {
       setLoading(false)
-      console.log("🏁 Registration process finished");
     }
   }
 

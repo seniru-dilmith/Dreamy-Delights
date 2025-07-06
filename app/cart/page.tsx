@@ -201,7 +201,7 @@ export default function CartPage() {
                     <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
                       <p className="text-sm text-blue-800 text-center">
                         <Lock className="h-4 w-4 inline mr-1" />
-                        You'll be prompted to sign in before completing your order.
+                        You&rsquo;ll be prompted to sign in before completing your order.
                         <Link 
                           href={`/auth/register?redirect=${encodeURIComponent("/checkout")}`}
                           className="text-blue-600 hover:text-blue-800 underline ml-1"

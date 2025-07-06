@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { 
   Star, 
@@ -59,12 +59,7 @@ export default function TestimonialManagement() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const { toast } = useToast();
 
-  // Fetch testimonials on component mount
-  useEffect(() => {
-    fetchTestimonialsData();
-  }, []);
-
-  const fetchTestimonialsData = async () => {
+  const fetchTestimonialsData = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetchTestimonials();
@@ -84,7 +79,12 @@ export default function TestimonialManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  // Fetch testimonials on component mount
+  useEffect(() => {
+    fetchTestimonialsData();
+  }, [fetchTestimonialsData]);
 
   const createTestimonial = async () => {
     try {

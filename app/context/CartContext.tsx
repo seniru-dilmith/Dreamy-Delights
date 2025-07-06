@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useReducer, useEffect, useState, type ReactNode } from "react"
+import { createContext, useContext, useReducer, useEffect, useState, useCallback, type ReactNode } from "react"
 import { useAuth } from "./AuthContext"
 import { getCart, addToCart as apiAddToCart, updateCartItem, removeFromCart as apiRemoveFromCart, clearCart as apiClearCart } from "@/firebase/api"
 
@@ -181,7 +181,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [mounted, user])
 
   // Sync cart from database when user logs in
-  const syncCart = async () => {
+  const syncCart = useCallback(async () => {
     if (!user) {
       // Load from localStorage for guest users
       const localCart = loadCartFromLocalStorage()
@@ -206,8 +206,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       // Merge localStorage cart with database cart if user just logged in
       if (localCart.length > 0) {
-        console.log("🔄 Merging localStorage cart with database cart...")
-        
         // Merge the carts (prioritize localStorage for quantities)
         const mergedCart = [...dbCart]
         
@@ -251,7 +249,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     } finally {
       dispatch({ type: "SET_LOADING", payload: false })
     }
-  }
+  }, [user])
 
   const addToCart = async (item: CartItem) => {
     dispatch({ type: "SET_ERROR", payload: null })
@@ -376,7 +374,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Load cart when user changes
   useEffect(() => {
     syncCart()
-  }, [user])
+  }, [user, syncCart])
 
   return (
     <CartContext.Provider

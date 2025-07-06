@@ -244,12 +244,12 @@ export default function TestimonialDebugPanel() {
           <div className="text-sm text-gray-600">
             <p><strong>Instructions:</strong></p>
             <ol className="list-decimal list-inside space-y-1">
-              <li>First, click "Check Token" to verify your admin authentication</li>
-              <li>Click "Direct API Test" to test authentication with the backend</li>
-              <li>Click "Test Fetch" to test reading testimonials</li>
-              <li>Click "Test Create" to create a test testimonial</li>
-              <li>Click "Test Update" to update the created testimonial</li>
-              <li>Click "Test Delete" to delete the test testimonial</li>
+              <li>First, click &ldquo;Check Token&rdquo; to verify your admin authentication</li>
+              <li>Click &ldquo;Direct API Test&rdquo; to test authentication with the backend</li>
+              <li>Click &ldquo;Test Fetch&rdquo; to test reading testimonials</li>
+              <li>Click &ldquo;Test Create&rdquo; to create a test testimonial</li>
+              <li>Click &ldquo;Test Update&rdquo; to update the created testimonial</li>
+              <li>Click &ldquo;Test Delete&rdquo; to delete the test testimonial</li>
             </ol>
           </div>
         </CardContent>

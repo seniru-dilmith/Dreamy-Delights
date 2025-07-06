@@ -94,7 +94,6 @@ function LoginForm({
   // Redirect to home if user is already authenticated
   useEffect(() => {
     if (!authLoading && user) {
-      console.log("🔄 User is authenticated, redirecting to home page");
       router.push('/');
     }
   }, [user, authLoading, router]);
@@ -104,26 +103,19 @@ function LoginForm({
     if (googleButtonRef.current) {
       renderGoogleButton(googleButtonRef.current);
     }
-  }, [renderGoogleButton]);
+  }, [renderGoogleButton, googleButtonRef]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError("")
 
-    console.log("🚀 handleSubmit called with:", { email, redirectPath: '/' });
-
     try {
-      console.log("🔄 Calling login function...");
       const success = await login(email, password)
-      console.log("📋 Login result:", success);
       
       if (success) {
-        console.log("✅ Login successful, attempting redirect to /");
         router.push('/')
-        console.log("🔄 Router.push called");
       } else {
-        console.log("❌ Login failed");
         setError("Invalid email or password")
       }
     } catch (err) {
@@ -131,7 +123,6 @@ function LoginForm({
       setError("An error occurred. Please try again.")
     } finally {
       setLoading(false)
-      console.log("🏁 Login process finished");
     }
   }
 
@@ -233,7 +224,7 @@ function LoginForm({
 
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
-                Don't have an account?{" "}
+                Don&rsquo;t have an account?{" "}
                 <Link href="/auth/register" className="text-pink-600 hover:text-pink-700 font-medium">
                   Sign up
                 </Link>

@@ -337,7 +337,7 @@ export default function AdminDashboard() {
                       onClick={() => setActiveTab("content")}
                       className="h-20 flex flex-col space-y-2"
                     >
-                      <Image className="w-6 h-6" />
+                      <Image className="w-6 h-6" aria-label="Content management icon" />
                       <span>Manage Content</span>
                     </Button>
                   )}
