@@ -42,32 +42,34 @@ jobs:
           PR_BODY=$(gh pr view $PR_NUMBER --json body --jq '.body')
           
           echo "pr_title=$PR_TITLE" >> $GITHUB_OUTPUT
-          
-          # Create release notes from PR
-          cat << EOF > release_notes.md
-          ## Pull Request #$PR_NUMBER: $PR_TITLE
-          
-          $PR_BODY
-          
-          ---
-          **Commit:** ${{ steps.commit_info.outputs.commit_hash }}
-          **Merged:** $(date -u +"%Y-%m-%d %H:%M UTC")
-          EOF
+          echo "pr_body=$PR_BODY" >> $GITHUB_OUTPUT
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create release notes for direct commit
-        id: direct_commit
+      - name: Create release description for PR
+        id: pr_release_notes
+        if: steps.commit_info.outputs.pr_number != ''
+        run: |
+          # Use PR body as release description, with some metadata
+          cat << EOF > release_notes.md
+          ${{ steps.pr_details.outputs.pr_body }}
+          
+          ---
+          **Pull Request:** #${{ steps.commit_info.outputs.pr_number }}  
+          **Commit:** ${{ steps.commit_info.outputs.commit_hash }}  
+          **Merged:** $(date -u +"%Y-%m-%d %H:%M UTC")
+          EOF
+
+      - name: Create release description for direct commit
+        id: direct_commit_notes
         if: steps.commit_info.outputs.pr_number == ''
         run: |
-          # Create release notes from commit message
+          # Create release description from commit message
           cat << EOF > release_notes.md
-          ## Direct Commit Release
-          
           **Commit Message:** ${{ steps.commit_info.outputs.commit_message }}
           
           ---
-          **Commit:** ${{ steps.commit_info.outputs.commit_hash }}
+          **Commit:** ${{ steps.commit_info.outputs.commit_hash }}  
           **Pushed:** $(date -u +"%Y-%m-%d %H:%M UTC")
           EOF
 
@@ -108,7 +110,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ steps.version.outputs.new_version }}
-          release_name: "${{ steps.version.outputs.new_version }} - ${{ steps.release_title.outputs.title }}"
+          release_name: ${{ steps.release_title.outputs.title }}
           body_path: release_notes.md
           draft: false
           prerelease: false
