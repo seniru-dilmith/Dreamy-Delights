@@ -638,7 +638,7 @@ export default function HomePage() {
           ) : (
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">What Our Customers Say</h2>
-              <p className="text-lg md:text-xl text-gray-600">Don&rsquo;t just take our word for it</p>
+              <p className="text-lg md:text-xl text-gray-600">Don&rsquo;t just take our word for it.</p>
             </div>
           )}
 
