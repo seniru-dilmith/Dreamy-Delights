@@ -41,8 +41,11 @@ jobs:
           PR_TITLE=$(gh pr view $PR_NUMBER --json title --jq '.title')
           PR_BODY=$(gh pr view $PR_NUMBER --json body --jq '.body')
           
+          # Use heredoc format for multiline content
           echo "pr_title=$PR_TITLE" >> $GITHUB_OUTPUT
-          echo "pr_body=$PR_BODY" >> $GITHUB_OUTPUT
+          echo "pr_body<<EOF" >> $GITHUB_OUTPUT
+          echo "$PR_BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
