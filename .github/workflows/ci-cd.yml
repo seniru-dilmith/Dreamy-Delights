@@ -61,6 +61,6 @@ jobs:
 
       - name: Deploy
         env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-        run: firebase deploy --token $FIREBASE_TOKEN
+          GOOGLE_APPLICATION_CREDENTIALS: ./functions/dreamy-delights-882ff-firebase-adminsdk-fbsvc-e3a40b9a80.json
+        run: firebase deploy --only hosting
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
