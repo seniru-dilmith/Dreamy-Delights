@@ -40,8 +40,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const convertFirebaseUser = async (firebaseUser: FirebaseUser): Promise<User> => {
     // For now, we'll skip custom claims to avoid IAM permission issues
     // All users will default to 'customer' role
-    console.log("🔄 Converting Firebase user:", firebaseUser.email);
-    console.log("📝 Defaulting to customer role to avoid IAM issues");
     
     return {
       id: firebaseUser.uid,
@@ -74,7 +72,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [mounted])
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    console.log("🚀 login called (using Firebase Auth directly)");
     
     if (!auth) {
       console.error("❌ Firebase not available")
@@ -82,17 +79,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     
     try {
-      console.log("🔧 Signing in with email and password...");
-      
       // Use Firebase Auth directly for email/password login
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       
-      console.log("✅ Email/password login successful!");
-      console.log("👤 User info:", {
-        uid: userCredential.user.uid,
-        email: userCredential.user.email,
-        displayName: userCredential.user.displayName
-      });
       
       // Firebase Auth will automatically trigger onAuthStateChanged
       // which will update our user state
@@ -107,17 +96,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Handle specific error cases
       if ((error as any)?.code === 'auth/user-not-found') {
-        console.log("ℹ️ User not found");
         return false;
       }
       
       if ((error as any)?.code === 'auth/wrong-password') {
-        console.log("ℹ️ Wrong password");
         return false;
       }
       
       if ((error as any)?.code === 'auth/invalid-email') {
-        console.log("ℹ️ Invalid email");
         return false;
       }
       
@@ -126,7 +112,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const loginWithGoogle = async (): Promise<boolean> => {
-    console.log("🚀 loginWithGoogle called (using Firebase Auth directly)");
     
     if (!auth) {
       console.error("❌ Firebase not available")
@@ -136,7 +121,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       // Check if Google OAuth is configured
       const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-      console.log("🔑 Google Client ID:", googleClientId ? "SET" : "NOT SET");
       
       if (!googleClientId || googleClientId.includes('your-')) {
         console.error("❌ Google Client ID not configured properly:", googleClientId);
@@ -151,28 +135,15 @@ For now, please use email/password authentication.`);
         return false;
       }
 
-      console.log("✅ Google Client ID configured properly");
-
       // Use Firebase Auth Google provider directly
-      console.log("🔧 Setting up Google Auth Provider...");
       const provider = new GoogleAuthProvider();
       
       // Optional: Add scopes if needed
       provider.addScope('email');
       provider.addScope('profile');
       
-      console.log("🚀 Starting Google Sign-In popup...");
-      
       // Sign in with popup
       const result = await signInWithPopup(auth, provider);
-      
-      console.log("✅ Google Sign-In successful!");
-      console.log("👤 User info:", {
-        uid: result.user.uid,
-        email: result.user.email,
-        displayName: result.user.displayName,
-        photoURL: result.user.photoURL
-      });
       
       // Firebase Auth will automatically trigger onAuthStateChanged
       // which will update our user state
@@ -187,7 +158,6 @@ For now, please use email/password authentication.`);
       
       // Handle specific error cases
       if ((error as any)?.code === 'auth/popup-closed-by-user') {
-        console.log("ℹ️ User closed the popup");
         return false;
       }
       
@@ -202,7 +172,6 @@ For now, please use email/password authentication.`);
   }
 
   const register = async (name: string, email: string, password: string): Promise<boolean> => {
-    console.log("🚀 register called (using Firebase Auth directly)");
     
     if (!auth) {
       console.error("❌ Firebase not available")
@@ -210,24 +179,15 @@ For now, please use email/password authentication.`);
     }
     
     try {
-      console.log("🔧 Creating user with email and password...");
-      
       // Use Firebase Auth directly for email/password registration
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       
-      console.log("✅ User created successfully!");
-      console.log("👤 User info:", {
-        uid: userCredential.user.uid,
-        email: userCredential.user.email,
-      });
       
       // Update the user's display name
       if (name) {
-        console.log("🔧 Updating user profile with display name...");
         await updateProfile(userCredential.user, {
           displayName: name
         });
-        console.log("✅ User profile updated!");
       }
       
       // Firebase Auth will automatically trigger onAuthStateChanged
@@ -243,17 +203,14 @@ For now, please use email/password authentication.`);
       
       // Handle specific error cases
       if ((error as any)?.code === 'auth/email-already-in-use') {
-        console.log("ℹ️ Email already in use");
         return false;
       }
       
       if ((error as any)?.code === 'auth/weak-password') {
-        console.log("ℹ️ Password is too weak");
         return false;
       }
       
       if ((error as any)?.code === 'auth/invalid-email') {
-        console.log("ℹ️ Invalid email");
         return false;
       }
       
@@ -262,13 +219,10 @@ For now, please use email/password authentication.`);
   }
 
   const logout = async (): Promise<void> => {
-    console.log("🚀 logout called (using Firebase Auth directly)");
     
     try {
       if (auth) {
-        console.log("🔧 Signing out...");
         await signOut(auth);
-        console.log("✅ Signed out successfully!");
       }
       setUser(null);
     } catch (error) {
@@ -290,8 +244,6 @@ For now, please use email/password authentication.`);
         console.error("Google Client ID not configured for button rendering");
         return
       }
-
-      console.log("🎯 Creating Google Sign-In button that uses Firebase Auth directly...");
 
       // Create a button element that triggers our loginWithGoogle function
       const button = document.createElement('button');
@@ -337,15 +289,12 @@ For now, please use email/password authentication.`);
       };
       
       button.onclick = async () => {
-        console.log("🖱️ Google button clicked - calling loginWithGoogle...");
         await loginWithGoogle();
       };
 
       // Replace the element's content with our button
       element.innerHTML = '';
       element.appendChild(button);
-      
-      console.log("✅ Google button rendered successfully");
     } catch (error) {
       console.error("Error rendering Google button:", error);
     }
