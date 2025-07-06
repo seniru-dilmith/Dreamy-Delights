@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { motion } from "framer-motion"
 import { 
   Mail, 
@@ -100,7 +100,7 @@ export default function ContactMessageManagement() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
   const [isReplyDialogOpen, setIsReplyDialogOpen] = useState(false)
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     try {
       setLoading(true)
       const filterOptions: any = {}
@@ -126,7 +126,7 @@ export default function ContactMessageManagement() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [statusFilter, toast])
 
   const fetchStats = async () => {
     try {
@@ -143,7 +143,7 @@ export default function ContactMessageManagement() {
   useEffect(() => {
     fetchMessages()
     fetchStats()
-  }, [statusFilter])
+  }, [statusFilter, fetchMessages])
 
   const handleMarkAsRead = async (messageId: string) => {
     try {

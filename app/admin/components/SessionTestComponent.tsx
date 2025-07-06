@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAdmin } from "@/app/context/AdminContext";
@@ -9,7 +9,7 @@ export default function SessionTestComponent() {
   const { admin, isAuthenticated, loading } = useAdmin();
   const [sessionInfo, setSessionInfo] = useState<any>({});
 
-  const refreshSessionInfo = () => {
+  const refreshSessionInfo = useCallback(() => {
     const encryptedToken = localStorage.getItem('dreamy_admin_token');
     const info: any = {
       timestamp: new Date().toLocaleTimeString(),
@@ -42,11 +42,11 @@ export default function SessionTestComponent() {
     }
     
     setSessionInfo(info);
-  };
+  }, [isAuthenticated, admin?.username, admin?.role, loading]);
 
   useEffect(() => {
     refreshSessionInfo();
-  }, [admin, isAuthenticated, loading]);
+  }, [admin, isAuthenticated, loading, refreshSessionInfo]);
 
   const testRefresh = () => {
     window.location.reload();
@@ -84,7 +84,7 @@ export default function SessionTestComponent() {
           <ol className="list-decimal list-inside space-y-1">
             <li>Login to admin panel</li>
             <li>Navigate to this debug tab</li>
-            <li>Click "Test Page Refresh" button</li>
+            <li>Click &ldquo;Test Page Refresh&rdquo; button</li>
             <li>Verify you remain logged in</li>
             <li>Check that session info shows valid token</li>
           </ol>

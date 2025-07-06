@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAdmin } from "@/app/context/AdminContext";
@@ -86,7 +86,7 @@ export default function AdminDebugPanel() {
     }
   };
 
-  const checkDebugInfo = () => {
+  const checkDebugInfo = useCallback(() => {
     const info = {
       isAuthenticated,
       adminData: admin,
@@ -96,11 +96,11 @@ export default function AdminDebugPanel() {
     };
     setDebugInfo(info);
     addTestResult(`Debug info updated: ${JSON.stringify(info, null, 2)}`);
-  };
+  }, [isAuthenticated, admin, loading]);
 
   useEffect(() => {
     checkDebugInfo();
-  }, [admin, isAuthenticated, loading]);
+  }, [admin, isAuthenticated, loading, checkDebugInfo]);
 
   return (
     <div className="p-6 space-y-6">

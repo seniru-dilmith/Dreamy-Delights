@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { 
   Star, 
@@ -62,9 +62,9 @@ export default function TestimonialManagement() {
   // Fetch testimonials on component mount
   useEffect(() => {
     fetchTestimonialsData();
-  }, []);
+  }, [fetchTestimonialsData]);
 
-  const fetchTestimonialsData = async () => {
+  const fetchTestimonialsData = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetchTestimonials();
@@ -84,7 +84,7 @@ export default function TestimonialManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const createTestimonial = async () => {
     try {
