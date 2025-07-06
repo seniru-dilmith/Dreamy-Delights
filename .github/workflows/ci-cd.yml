@@ -1,0 +1,62 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Lint (initial)
+        run: npm run lint
+
+      - name: Write backend environment file
+        run: |
+          cat << 'EOF' > functions/.env
+          ${{ secrets.BACKEND_ENV }}
+          EOF
+
+      - name: Write frontend environment file
+        run: |
+          cat << 'EOF' > .env
+          ${{ secrets.FRONTEND_ENV }}
+          EOF
+
+      - name: Write Firebase service account key
+        run: |
+          cat << 'EOF' > functions/dreamy-delights-882ff-firebase-adminsdk-fbsvc-e3a40b9a80.json
+          ${{ secrets.FIREBASE_SERVICE }}
+          EOF
+
+      - name: Install root dependencies
+        run: npm install
+
+      - name: Install functions dependencies
+        run: |
+          cd functions
+          npm install
+
+      - name: Lint (after install)
+        run: npm run lint || echo "Lint check completed"
+
+      - name: Return to root directory and build
+        run: |
+          cd ..
+          npm run build
+
+      - name: Deploy
+        run: npm run deploy
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'

@@ -1,0 +1,114 @@
+name: Auto Release
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for proper versioning
+
+      - name: Get commit info
+        id: commit_info
+        run: |
+          # Get the commit message
+          COMMIT_MSG=$(git log -1 --pretty=format:"%s")
+          echo "commit_message=$COMMIT_MSG" >> $GITHUB_OUTPUT
+          
+          # Get the commit hash (short)
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          echo "commit_hash=$COMMIT_HASH" >> $GITHUB_OUTPUT
+          
+          # Check if this was a PR merge
+          PR_NUMBER=$(echo "$COMMIT_MSG" | grep -oP 'Merge pull request #\K\d+' || echo "")
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+
+      - name: Get PR details if applicable
+        id: pr_details
+        if: steps.commit_info.outputs.pr_number != ''
+        run: |
+          PR_NUMBER=${{ steps.commit_info.outputs.pr_number }}
+          # Get PR title and body using GitHub CLI
+          PR_TITLE=$(gh pr view $PR_NUMBER --json title --jq '.title')
+          PR_BODY=$(gh pr view $PR_NUMBER --json body --jq '.body')
+          
+          echo "pr_title=$PR_TITLE" >> $GITHUB_OUTPUT
+          
+          # Create release notes from PR
+          cat << EOF > release_notes.md
+          ## Pull Request #$PR_NUMBER: $PR_TITLE
+          
+          $PR_BODY
+          
+          ---
+          **Commit:** ${{ steps.commit_info.outputs.commit_hash }}
+          **Merged:** $(date -u +"%Y-%m-%d %H:%M UTC")
+          EOF
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release notes for direct commit
+        id: direct_commit
+        if: steps.commit_info.outputs.pr_number == ''
+        run: |
+          # Create release notes from commit message
+          cat << EOF > release_notes.md
+          ## Direct Commit Release
+          
+          **Commit Message:** ${{ steps.commit_info.outputs.commit_message }}
+          
+          ---
+          **Commit:** ${{ steps.commit_info.outputs.commit_hash }}
+          **Pushed:** $(date -u +"%Y-%m-%d %H:%M UTC")
+          EOF
+
+      - name: Generate version tag
+        id: version
+        run: |
+          # Get the latest tag, or start from v1.0.0 if none exists
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
+          echo "Latest tag: $LATEST_TAG"
+          
+          # Extract version numbers
+          VERSION=${LATEST_TAG#v}
+          IFS='.' read -ra VERSION_PARTS <<< "$VERSION"
+          MAJOR=${VERSION_PARTS[0]}
+          MINOR=${VERSION_PARTS[1]}
+          PATCH=${VERSION_PARTS[2]}
+          
+          # Increment patch version
+          PATCH=$((PATCH + 1))
+          NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
+          
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "New version: $NEW_VERSION"
+
+      - name: Determine release title
+        id: release_title
+        run: |
+          if [ "${{ steps.commit_info.outputs.pr_number }}" != "" ]; then
+            TITLE="${{ steps.pr_details.outputs.pr_title }}"
+          else
+            TITLE="${{ steps.commit_info.outputs.commit_message }}"
+          fi
+          echo "title=$TITLE" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.version.outputs.new_version }}
+          release_name: "${{ steps.version.outputs.new_version }} - ${{ steps.release_title.outputs.title }}"
+          body_path: release_notes.md
+          draft: false
+          prerelease: false
