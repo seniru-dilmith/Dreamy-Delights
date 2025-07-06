@@ -121,7 +121,7 @@ export default function ContactPage() {
             Contact Us
           </h1>
           <p className="text-lg md:text-xl text-gray-700 max-w-2xl mx-auto leading-relaxed">
-            We'd love to hear from you! Get in touch with any questions or to place a custom order.
+            We&rsquo;d love to hear from you! Get in touch with any questions or to place a custom order.
           </p>
         </motion.div>
       </section>
@@ -136,7 +136,7 @@ export default function ContactPage() {
             className="text-center mb-12 md:mb-16"
           >
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Get In Touch</h2>
-            <p className="text-lg md:text-xl text-gray-600">We're here to help make your sweet dreams come true</p>
+            <p className="text-lg md:text-xl text-gray-600">We&rsquo;re here to help make your sweet dreams come true</p>
           </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 mb-12 md:mb-16">
@@ -355,7 +355,7 @@ export default function ContactPage() {
           >
             <h2 className="text-2xl md:text-4xl font-bold mb-4 md:mb-6 break-words">Ready to Order Something Sweet?</h2>
             <p className="text-lg md:text-xl mb-6 md:mb-8 break-words">
-              Don't wait! Browse our delicious menu and place your order today.
+              Don&rsquo;t wait! Browse our delicious menu and place your order today.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center w-full max-w-md mx-auto">
               <Button asChild size="lg" variant="secondary" className="h-12 w-full sm:w-auto min-w-0">
@@ -387,9 +387,9 @@ export default function ContactPage() {
               Thank You for Reaching Out! 🌟
             </DialogTitle>
             <DialogDescription className="text-center text-gray-600 mt-4 leading-relaxed">
-              We've successfully received your message and truly appreciate you taking the time to contact Dreamy Delights. 
+              We&rsquo;ve successfully received your message and truly appreciate you taking the time to contact Dreamy Delights. 
               <br /><br />
-              Our dedicated team will carefully review your inquiry and get back to you within 24 hours. We're excited to help make your sweet dreams come true!
+              Our dedicated team will carefully review your inquiry and get back to you within 24 hours. We&rsquo;re excited to help make your sweet dreams come true!
               <br /><br />
               <span className="text-sm font-medium text-purple-600">
                 Keep an eye on your inbox for our response! 📧

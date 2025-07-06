@@ -1,5 +1,6 @@
 import { Home } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 
 export default function NotFound() {
@@ -8,9 +9,11 @@ export default function NotFound() {
       <div className="text-center z-10 max-w-2xl mx-auto w-full">
         {/* Large Prominent 404 Image */}
         <div className="mb-6 sm:mb-8 flex justify-center">
-          <img
+          <Image
             src="/404.svg"
             alt="404 - Page Not Found"
+            width={600}
+            height={400}
             className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl h-56 sm:h-72 md:h-80 lg:h-96 xl:h-[28rem] object-contain"
           />
         </div>

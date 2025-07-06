@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { MapPin, User, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -147,14 +148,14 @@ export default function CheckoutPage() {
             Thank you for your order. Your order ID is: <strong>#{orderId}</strong>
           </p>
           <p className="text-gray-600 mb-8">
-            We'll send you an email confirmation shortly and keep you updated on your order status.
+            We&rsquo;ll send you an email confirmation shortly and keep you updated on your order status.
           </p>
           <div className="space-y-4">
             <Button asChild className="w-full bg-pink-500 hover:bg-pink-600">
-              <a href="/menu">Order Again</a>
+              <Link href="/menu">Order Again</Link>
             </Button>
             <Button asChild variant="outline" className="w-full">
-              <a href="/">Back to Home</a>
+              <Link href="/">Back to Home</Link>
             </Button>
           </div>
         </div>
@@ -379,7 +380,7 @@ export default function CheckoutPage() {
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Login Required</h3>
                 <p className="text-gray-600 mb-6">
-                  You need to log in to complete your order. Don't worry, your cart items are saved!
+                  You need to log in to complete your order. Don&rsquo;t worry, your cart items are saved!
                 </p>
                 <div className="space-y-3">
                   <Button 

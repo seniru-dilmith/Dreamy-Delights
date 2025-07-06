@@ -633,12 +633,12 @@ export default function HomePage() {
               className="text-center mb-16"
             >
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">What Our Customers Say</h2>
-              <p className="text-lg md:text-xl text-gray-600">Don't just take our word for it</p>
+              <p className="text-lg md:text-xl text-gray-600">Don&rsquo;t just take our word for it</p>
             </motion.div>
           ) : (
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">What Our Customers Say</h2>
-              <p className="text-lg md:text-xl text-gray-600">Don't just take our word for it</p>
+              <p className="text-lg md:text-xl text-gray-600">Don&rsquo;t just take our word for it</p>
             </div>
           )}
 
@@ -675,7 +675,7 @@ export default function HomePage() {
                           <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
                         ))}
                       </div>
-                      <p className="text-gray-700 mb-4 italic text-sm md:text-base">"{testimonial.text}"</p>
+                      <p className="text-gray-700 mb-4 italic text-sm md:text-base">&ldquo;{testimonial.text}&rdquo;</p>
                       <p className="font-semibold text-gray-900">{testimonial.name}</p>
                     </Card>
                   </motion.div>
@@ -687,7 +687,7 @@ export default function HomePage() {
                           <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
                         ))}
                       </div>
-                      <p className="text-gray-700 mb-4 italic text-sm md:text-base">"{testimonial.text}"</p>
+                      <p className="text-gray-700 mb-4 italic text-sm md:text-base">&ldquo;{testimonial.text}&rdquo;</p>
                       <p className="font-semibold text-gray-900">{testimonial.name}</p>
                     </Card>
                   </div>

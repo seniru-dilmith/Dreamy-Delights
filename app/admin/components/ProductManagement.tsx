@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { Plus, Edit, Trash2, Upload, Search, Filter, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -381,7 +382,7 @@ export default function ProductManagement() {
                     />
                     {imagePreview && (
                       <div className="mt-2">
-                        <img src={imagePreview} alt="Preview" className="w-32 h-32 object-cover rounded-lg" />
+                        <Image src={imagePreview} alt="Preview" width={128} height={128} className="w-32 h-32 object-cover rounded-lg" />
                       </div>
                     )}
                   </div>
@@ -504,9 +505,11 @@ export default function ProductManagement() {
                       filteredProducts.map(product => (
                         <TableRow key={product.id}>
                           <TableCell>
-                            <img
+                            <Image
                               src={product.imageUrl || "/placeholder.jpg"}
                               alt={product.name}
+                              width={48}
+                              height={48}
                               className="w-12 h-12 object-cover rounded-lg"
                             />
                           </TableCell>

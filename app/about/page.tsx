@@ -193,9 +193,9 @@ export default function AboutPage() {
           >
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 md:mb-8 break-words">Our Mission</h2>
             <p className="text-lg md:text-xl text-gray-700 leading-relaxed mb-6 md:mb-8 break-words">
-              "To create exceptional baked goods that bring people together, celebrate life's special moments, and
+              &ldquo;To create exceptional baked goods that bring people together, celebrate life&rsquo;s special moments, and
               spread joy one delicious bite at a time. We believe that every cake tells a story, every cupcake sparks a
-              smile, and every customer deserves nothing but the best."
+              smile, and every customer deserves nothing but the best.&rdquo;
             </p>
             <div className="w-16 md:w-24 h-1 bg-gradient-to-r from-pink-500 to-purple-500 mx-auto"></div>
           </motion.div>
