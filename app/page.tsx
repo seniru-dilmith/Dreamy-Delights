@@ -179,10 +179,9 @@ export default function HomePage() {
                 >
                   <Button 
                     asChild 
-                    size="lg" 
-                    className="flex-1 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 h-12 md:h-14 text-base md:text-lg font-semibold"
+                    className="flex-1 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 min-h-[2.5rem] md:min-h-[4rem] h-10 md:h-16 text-base md:text-lg font-semibold px-6 py-3"
                   >
-                    <Link href="/menu" className="flex items-center justify-center">
+                    <Link href="/menu" className="flex items-center justify-center w-full h-full">
                       <ShoppingCart className="mr-2 h-5 w-5" />
                       Order Now
                     </Link>
@@ -190,10 +189,9 @@ export default function HomePage() {
                   <Button
                     asChild
                     variant="outline"
-                    size="lg"
-                    className="flex-1 border-2 border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-400 shadow-md hover:shadow-lg transition-all duration-300 h-12 md:h-14 text-base md:text-lg font-semibold"
+                    className="flex-1 border-2 border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-400 shadow-md hover:shadow-lg transition-all duration-300 min-h-[2.5rem] md:min-h-[4rem] h-10 md:h-16 text-base md:text-lg font-semibold px-6 py-3"
                   >
-                    <Link href="/about" className="flex items-center justify-center">
+                    <Link href="/about" className="flex items-center justify-center w-full h-full">
                       <Heart className="mr-2 h-5 w-5" />
                       Our Story
                     </Link>
@@ -243,10 +241,9 @@ export default function HomePage() {
                 <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto lg:mx-0 w-full">
                   <Button 
                     asChild 
-                    size="lg" 
-                    className="flex-1 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 h-12 md:h-14 text-base md:text-lg font-semibold"
+                    className="flex-1 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 min-h-[2.5rem] md:min-h-[4rem] h-10 md:h-16 text-base md:text-lg font-semibold px-6 py-3"
                   >
-                    <Link href="/menu" className="flex items-center justify-center">
+                    <Link href="/menu" className="flex items-center justify-center w-full h-full">
                       <ShoppingCart className="mr-2 h-5 w-5" />
                       Order Now
                     </Link>
@@ -254,10 +251,9 @@ export default function HomePage() {
                   <Button
                     asChild
                     variant="outline"
-                    size="lg"
-                    className="flex-1 border-2 border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-400 shadow-md hover:shadow-lg transition-all duration-300 h-12 md:h-14 text-base md:text-lg font-semibold"
+                    className="flex-1 border-2 border-purple-300 text-purple-700 hover:bg-purple-50 hover:border-purple-400 shadow-md hover:shadow-lg transition-all duration-300 min-h-[2.5rem] md:min-h-[4rem] h-10 md:h-16 text-base md:text-lg font-semibold px-6 py-3"
                   >
-                    <Link href="/about" className="flex items-center justify-center">
+                    <Link href="/about" className="flex items-center justify-center w-full h-full">
                       <Heart className="mr-2 h-5 w-5" />
                       Our Story
                     </Link>
