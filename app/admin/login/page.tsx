@@ -82,7 +82,7 @@ export default function AdminLoginPage() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-pink-50">
         <div className="text-center">
           <p className="text-lg text-gray-600 mb-4">Redirecting to admin dashboard...</p>
-          <p className="text-sm text-gray-500 mb-4">If you're not redirected automatically,</p>
+          <p className="text-sm text-gray-500 mb-4">If you&rsquo;re not redirected automatically,</p>
           <Button 
             onClick={() => router.push("/admin/dashboard")}
             className="bg-purple-600 hover:bg-purple-700"

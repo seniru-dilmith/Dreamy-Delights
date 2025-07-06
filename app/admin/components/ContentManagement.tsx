@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { Upload, Edit, Trash2, Image as ImageIcon, FileText, Star } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -392,7 +393,7 @@ export default function ContentManagement() {
                             onChange={handleImageChange}
                           />
                           {imagePreview && (
-                            <img src={imagePreview} alt="Preview" className="w-full h-32 object-cover rounded-lg" />
+                            <Image src={imagePreview} alt="Preview" width={300} height={128} className="w-full h-32 object-cover rounded-lg" />
                           )}
                         </div>
 
@@ -424,9 +425,11 @@ export default function ContentManagement() {
                   {banners.map(banner => (
                     <Card key={banner.id}>
                       <CardContent className="p-4">
-                        <img
-                          src={banner.imageUrl}
+                        <Image
+                          src={banner.imageUrl || '/placeholder.jpg'}
                           alt={banner.title}
+                          width={300}
+                          height={128}
                           className="w-full h-32 object-cover rounded-lg mb-3"
                         />
                         <h4 className="font-medium mb-1">{banner.title}</h4>
@@ -513,7 +516,7 @@ export default function ContentManagement() {
                             onChange={handleImageChange}
                           />
                           {imagePreview && (
-                            <img src={imagePreview} alt="Preview" className="w-20 h-20 object-cover rounded-full" />
+                            <Image src={imagePreview} alt="Preview" width={80} height={80} className="w-20 h-20 object-cover rounded-full" />
                           )}
                         </div>
 
@@ -556,9 +559,11 @@ export default function ContentManagement() {
                       <CardContent className="p-4">
                         <div className="flex items-start space-x-3 mb-3">
                           {testimonial?.imageUrl ? (
-                            <img
+                            <Image
                               src={testimonial.imageUrl}
                               alt={testimonial?.customerName || 'Customer'}
+                              width={48}
+                              height={48}
                               className="w-12 h-12 object-cover rounded-full"
                             />
                           ) : (
@@ -667,7 +672,7 @@ export default function ContentManagement() {
                             onChange={handleImageChange}
                           />
                           {imagePreview && (
-                            <img src={imagePreview} alt="Preview" className="w-full h-32 object-cover rounded-lg" />
+                            <Image src={imagePreview} alt="Preview" width={300} height={128} className="w-full h-32 object-cover rounded-lg" />
                           )}
                         </div>
 
@@ -695,9 +700,11 @@ export default function ContentManagement() {
                             <p className="text-gray-600 line-clamp-3">{section.content}</p>
                           </div>
                           {section.imageUrl && (
-                            <img
+                            <Image
                               src={section.imageUrl}
                               alt={section.title}
+                              width={96}
+                              height={96}
                               className="w-24 h-24 object-cover rounded-lg ml-4"
                             />
                           )}

@@ -103,7 +103,7 @@ function LoginForm({
     if (googleButtonRef.current) {
       renderGoogleButton(googleButtonRef.current);
     }
-  }, [renderGoogleButton]);
+  }, [renderGoogleButton, googleButtonRef]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -224,7 +224,7 @@ function LoginForm({
 
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
-                Don't have an account?{" "}
+                Don&rsquo;t have an account?{" "}
                 <Link href="/auth/register" className="text-pink-600 hover:text-pink-700 font-medium">
                   Sign up
                 </Link>

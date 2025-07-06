@@ -117,7 +117,7 @@ function RegisterForm({
     if (googleButtonRef.current) {
       renderGoogleButton(googleButtonRef.current);
     }
-  }, [renderGoogleButton]);
+  }, [renderGoogleButton, googleButtonRef]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
