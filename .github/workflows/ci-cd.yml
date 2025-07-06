@@ -49,12 +49,12 @@ jobs:
           npm install
 
       - name: Lint (after install)
-        run: npm run lint || echo "Lint check completed"
+        run: |
+          cd functions
+          npm run lint
 
       - name: Return to root directory and build
-        run: |
-          cd ..
-          npm run build
+        run: npm run build
 
       - name: Deploy
         run: npm run deploy
