@@ -59,11 +59,6 @@ export default function TestimonialManagement() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const { toast } = useToast();
 
-  // Fetch testimonials on component mount
-  useEffect(() => {
-    fetchTestimonialsData();
-  }, [fetchTestimonialsData]);
-
   const fetchTestimonialsData = useCallback(async () => {
     try {
       setLoading(true);
@@ -85,6 +80,11 @@ export default function TestimonialManagement() {
       setLoading(false);
     }
   }, [toast]);
+
+  // Fetch testimonials on component mount
+  useEffect(() => {
+    fetchTestimonialsData();
+  }, [fetchTestimonialsData]);
 
   const createTestimonial = async () => {
     try {
