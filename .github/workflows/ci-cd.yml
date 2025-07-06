@@ -56,8 +56,11 @@ jobs:
           cd functions
           npm run lint
 
+      - name: Build project
+        run: npm run build
+
       - name: Deploy
         env:
-          GOOGLE_APPLICATION_CREDENTIALS: ./functions/dreamy-delights-882ff-firebase-adminsdk-fbsvc-e3a40b9a80.json
-        run: npm run deploy
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: npm run deploy --token $FIREBASE_TOKEN
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
