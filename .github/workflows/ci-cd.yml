@@ -62,5 +62,5 @@ jobs:
       - name: Deploy
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-        run: npm run deploy --token $FIREBASE_TOKEN
+        run: firebase deploy --token $FIREBASE_TOKEN
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
