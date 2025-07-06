@@ -206,8 +206,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
       // Merge localStorage cart with database cart if user just logged in
       if (localCart.length > 0) {
-        console.log("🔄 Merging localStorage cart with database cart...")
-        
         // Merge the carts (prioritize localStorage for quantities)
         const mergedCart = [...dbCart]
         
