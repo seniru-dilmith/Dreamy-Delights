@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Users, Mail, Shield, Ban, Eye } from "lucide-react";
+import { Users, Mail, Shield, Ban, Eye, Loader2, Check, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ export default function UserManagement() {
   const [filterRole, setFilterRole] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [isLoading, setIsLoading] = useState(false);
+  const [pendingStatusChanges, setPendingStatusChanges] = useState<Record<string, string>>({});
 
   useEffect(() => {
     loadUsers();
@@ -63,6 +64,13 @@ export default function UserManagement() {
           : user
       ));
       
+      // Remove from pending changes
+      setPendingStatusChanges(prev => {
+        const updated = { ...prev };
+        delete updated[userId];
+        return updated;
+      });
+      
       // Make API call to update user status
       const response = await adminUpdateUserStatus(userId, newStatus);
       if (!response.success) {
@@ -75,6 +83,29 @@ export default function UserManagement() {
       // Revert on error
       loadUsers();
     }
+  };
+
+  const handleStatusChange = (userId: string, newStatus: string) => {
+    // Add to pending changes instead of immediately updating
+    setPendingStatusChanges(prev => ({
+      ...prev,
+      [userId]: newStatus
+    }));
+  };
+
+  const confirmStatusChange = (userId: string) => {
+    const newStatus = pendingStatusChanges[userId];
+    if (newStatus) {
+      updateUserStatus(userId, newStatus);
+    }
+  };
+
+  const cancelStatusChange = (userId: string) => {
+    setPendingStatusChanges(prev => {
+      const updated = { ...prev };
+      delete updated[userId];
+      return updated;
+    });
   };
 
   const updateUserRole = async (userId: string, newRole: string) => {
@@ -210,9 +241,9 @@ export default function UserManagement() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-                  <p className="text-2xl font-bold">${totalRevenue.toFixed(2)}</p>
+                  <p className="text-2xl font-bold">Rs. {totalRevenue.toFixed(2)}</p>
                 </div>
-                <div className="w-8 h-8 text-gray-400">$</div>
+                <div className="w-8 h-8 text-gray-400">Rs.</div>
               </div>
             </CardContent>
           </Card>
@@ -248,85 +279,117 @@ export default function UserManagement() {
           </CardHeader>
           
           <CardContent>
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Join Date</TableHead>
-                    <TableHead>Last Login</TableHead>
-                    <TableHead>Orders</TableHead>
-                    <TableHead>Total Spent</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredUsers.map(user => (
-                    <TableRow key={user.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{user.name}</p>
-                          <p className="text-sm text-gray-600">{user.email}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>{getRoleBadge(user.role)}</TableCell>
-                      <TableCell>{getStatusBadge(user.status)}</TableCell>
-                      <TableCell className="text-sm">
-                        {formatDate(user.joinDate)}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {formatDate(user.lastLogin)}
-                      </TableCell>
-                      <TableCell>{user.totalOrders}</TableCell>
-                      <TableCell>${user.totalSpent.toFixed(2)}</TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Select
-                            value={user.status}
-                            onValueChange={(value) => updateUserStatus(user.id, value as User["status"])}
-                          >
-                            <SelectTrigger className="w-28">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="active">Active</SelectItem>
-                              <SelectItem value="banned">Banned</SelectItem>
-                            </SelectContent>
-                          </Select>
-
-                          {user.role !== "customer" && (
-                            <Select
-                              value={user.role}
-                              onValueChange={(value) => updateUserRole(user.id, value as User["role"])}
-                            >
-                              <SelectTrigger className="w-28">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="customer">Customer</SelectItem>
-                                <SelectItem value="editor">Editor</SelectItem>
-                                <SelectItem value="admin">Admin</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          )}
-
-                          <Button size="sm" variant="outline">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-
-            {filteredUsers.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                No users found for the selected filters.
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+                <span className="ml-2 text-gray-600">Loading users...</span>
               </div>
+            ) : (
+              <>
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>User</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Join Date</TableHead>
+                        <TableHead>Last Login</TableHead>
+                        <TableHead>Orders</TableHead>
+                        <TableHead>Total Spent</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredUsers.map(user => (
+                        <TableRow key={user.id}>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">{user.name}</p>
+                              <p className="text-sm text-gray-600">{user.email}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell>{getRoleBadge(user.role)}</TableCell>
+                          <TableCell>{getStatusBadge(user.status)}</TableCell>
+                          <TableCell className="text-sm">
+                            {formatDate(user.joinDate)}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {formatDate(user.lastLogin)}
+                          </TableCell>
+                          <TableCell>{user.totalOrders}</TableCell>
+                          <TableCell>Rs. {user.totalSpent.toFixed(2)}</TableCell>
+                          <TableCell>
+                            <div className="flex space-x-2">
+                              <div className="flex items-center space-x-1">
+                                <Select
+                                  value={pendingStatusChanges[user.id] || user.status}
+                                  onValueChange={(value) => handleStatusChange(user.id, value)}
+                                >
+                                  <SelectTrigger className="w-28">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="active">Active</SelectItem>
+                                    <SelectItem value="banned">Banned</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                
+                                {pendingStatusChanges[user.id] && (
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                      onClick={() => confirmStatusChange(user.id)}
+                                    >
+                                      <Check className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                      onClick={() => cancelStatusChange(user.id)}
+                                    >
+                                      <X className="w-4 h-4" />
+                                    </Button>
+                                  </>
+                                )}
+                              </div>
+
+                              {user.role !== "customer" && (
+                                <Select
+                                  value={user.role}
+                                  onValueChange={(value) => updateUserRole(user.id, value as User["role"])}
+                                >
+                                  <SelectTrigger className="w-28">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="customer">Customer</SelectItem>
+                                    <SelectItem value="editor">Editor</SelectItem>
+                                    <SelectItem value="admin">Admin</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              )}
+
+                              <Button size="sm" variant="outline">
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {filteredUsers.length === 0 && !isLoading && (
+                  <div className="text-center py-8 text-gray-500">
+                    No users found for the selected filters.
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>

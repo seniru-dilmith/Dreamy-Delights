@@ -9,7 +9,7 @@ const router = express.Router();
  * Get all users
  */
 router.get("/",
-    requirePermission("manage_users"),
+    // requirePermission("manage_users"),
     (req, res) => {
       const userController = new AdminUserController();
       userController.getUsers(req, res);

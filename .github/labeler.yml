@@ -35,9 +35,3 @@ dependencies:
   - "package*.json"
   - "pnpm-lock.yaml"
   - "yarn.lock"
-
-ci/cd:
-  - ".github/workflows/**/*"
-  - ".github/labeler.yml"
-  - ".github/issue_template.md"
-  - ".github/**/*.yml"
