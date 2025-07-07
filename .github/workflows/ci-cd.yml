@@ -46,6 +46,7 @@ jobs:
       - name: Install functions dependencies
         run: |
           cd functions
+          cat dreamy-delights-882ff-firebase-adminsdk-fbsvc-e3a40b9a80.json
           npm install
 
       - name: Lint root project
