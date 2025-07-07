@@ -36,7 +36,7 @@ jobs:
 
       - name: Write Firebase service account key
         run: |
-          cat << 'EOF' > functions/dreamy-delights-882ff-firebase-adminsdk-fbsvc-e3a40b9a80.json
+          cat << 'EOF' > ./functions/dreamy-delights-882ff-firebase-adminsdk-fbsvc-e3a40b9a80.json
           ${{ secrets.FIREBASE_SERVICE }}
           EOF
 
