@@ -1,37 +1,33 @@
-# Configuration for the labeler action
-# Add labels to pull requests based on the files that are modified
-
-# Label for frontend changes
 frontend:
-  - "app/**/*"
-  - "components/**/*"
-  - "styles/**/*"
-  - "public/**/*"
-  - "*.tsx"
-  - "*.ts"
-  - "*.css"
+  - 'app/**'
+  - 'components/**'
+  - 'styles/**'
+  - 'public/**'
+  - '**/*.tsx'
+  - '**/*.ts'
+  - '**/*.css'
 
-# Label for backend/functions changes
 backend:
-  - "functions/**/*"
-  - "firebase/**/*"
-  - "scripts/**/*"
+  - 'functions/**'
+  - 'firebase/**'
+  - 'scripts/**'
 
-# Label for configuration changes
 config:
-  - "*.json"
-  - "*.js"
-  - "*.mjs"
-  - "*.config.*"
-  - ".github/**/*"
+  - '**/*.json'
+  - '**/*.js'
+  - '**/*.mjs'
+  - '**/*.config.*'
+  - '.github/*.yml'
+  - '.github/*.yaml'
 
-# Label for documentation changes
 documentation:
-  - "*.md"
-  - "docs/**/*"
+  - '**/*.md'
+  - 'docs/**'
 
-# Label for dependency changes
 dependencies:
-  - "package*.json"
-  - "pnpm-lock.yaml"
-  - "yarn.lock"
+  - 'package*.json'
+  - 'pnpm-lock.yaml'
+  - 'yarn.lock'
+
+ci-cd:
+  - '.github/workflows/**'
