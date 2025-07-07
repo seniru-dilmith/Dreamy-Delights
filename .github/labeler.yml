@@ -35,8 +35,3 @@ dependencies:
   - "package*.json"
   - "pnpm-lock.yaml"
   - "yarn.lock"
-
-# Label for CI/CD changes
-CiCd:
-  - ".github/workflows/**/*"
-  - ".github/**/*.yml"
