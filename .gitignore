@@ -30,3 +30,4 @@ next-env.d.ts
 # firebase
 dreamy-delights-882ff-firebase-adminsdk-fbsvc-e3a40b9a80.json
 .firebase
+firebase-debug.log
