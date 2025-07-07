@@ -3,40 +3,46 @@
 
 # Label for frontend changes
 frontend:
-  - "app/**/*"
-  - "components/**/*"
-  - "styles/**/*"
-  - "public/**/*"
-  - "*.tsx"
-  - "*.ts"
-  - "*.css"
+  - any:
+    - "app/**/*"
+    - "components/**/*"
+    - "styles/**/*"
+    - "public/**/*"
+    - "*.tsx"
+    - "*.ts"
+    - "*.css"
 
 # Label for backend/functions changes
 backend:
-  - "functions/**/*"
-  - "firebase/**/*"
-  - "scripts/**/*"
+  - any:
+    - "functions/**/*"
+    - "firebase/**/*"
+    - "scripts/**/*"
 
 # Label for configuration changes
 config:
-  - "*.json"
-  - "*.js"
-  - "*.mjs"
-  - "*.config.*"
-  - ".github/**/*"
+  - any:
+    - "*.json"
+    - "*.js"
+    - "*.mjs"
+    - "*.config.*"
+    - ".github/**/*"
 
 # Label for documentation changes
 documentation:
-  - "*.md"
-  - "docs/**/*"
+  - any:
+    - "*.md"
+    - "docs/**/*"
 
 # Label for dependency changes
 dependencies:
-  - "package*.json"
-  - "pnpm-lock.yaml"
-  - "yarn.lock"
+  - any:
+    - "package*.json"
+    - "pnpm-lock.yaml"
+    - "yarn.lock"
 
 # Label for CI/CD changes
 ci-cd:
-  - ".github/workflows/**/*"
-  - ".github/**/*.yml"
+  - any:
+    - ".github/workflows/**/*"
+    - ".github/**/*.yml"
