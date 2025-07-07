@@ -102,7 +102,7 @@ _Where dreams meet delicious reality! Built with cutting-edge technology and spr
 
 ```bash
 # 1️⃣ Clone the magic
-git clone https://github.com/your-username/Dreamy-Delights.git
+git clone https://github.com/seniru-dilmih/Dreamy-Delights.git
 cd Dreamy-Delights
 
 # 2️⃣ Install superpowers
@@ -224,9 +224,9 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ### _Making the web more delicious, one commit at a time!_ 🍰
 
-[![⭐ Star this repo](https://img.shields.io/badge/⭐-Star%20this%20repo-FFD700?style=for-the-badge)](https://github.com/your-username/Dreamy-Delights)
-[![🐛 Report Bug](https://img.shields.io/badge/🐛-Report%20Bug-FF6B6B?style=for-the-badge)](https://github.com/your-username/Dreamy-Delights/issues)
-[![💡 Request Feature](https://img.shields.io/badge/💡-Request%20Feature-4ECDC4?style=for-the-badge)](https://github.com/your-username/Dreamy-Delights/issues)
+[![⭐ Star this repo](https://img.shields.io/badge/⭐-Star%20this%20repo-FFD700?style=for-the-badge)](https://github.com/seniru-dilmith/Dreamy-Delights)
+[![🐛 Report Bug](https://img.shields.io/badge/🐛-Report%20Bug-FF6B6B?style=for-the-badge)](https://github.com/seniru-dilmith/Dreamy-Delights/issues)
+[![💡 Request Feature](https://img.shields.io/badge/💡-Request%20Feature-4ECDC4?style=for-the-badge)](https://github.com/seniru-dilmith/Dreamy-Delights/issues)
 
 ---
 
