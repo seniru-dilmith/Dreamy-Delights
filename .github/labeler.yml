@@ -1,28 +1,28 @@
 # Configuration for the labeler action
-# Add labels to pull requests based on the files that are modified
+# Add labels to pull requests based on ALL files modified across ALL commits in the PR
 
 # Label for frontend changes
 frontend:
 - changed-files:
   - any-glob-to-any-file:
-    - 'app/**/*'
-    - 'components/**/*'
-    - 'styles/**/*'
-    - 'public/**/*'
+    - 'app/**'
+    - 'components/**'
+    - 'styles/**'
+    - 'public/**'
     - '**/*.tsx'
     - '**/*.ts'
     - '**/*.css'
-    - 'hooks/**/*'
+    - 'hooks/**'
 
 # Label for backend/functions changes
 backend:
 - changed-files:
   - any-glob-to-any-file:
-    - 'functions/**/*'
-    - 'firebase/**/*'
-    - 'scripts/**/*'
-    - 'utils/**/*'
-    - 'types/**/*'
+    - 'functions/**'
+    - 'firebase/**'
+    - 'scripts/**'
+    - 'utils/**'
+    - 'types/**'
 
 # Label for configuration changes
 config:
@@ -32,7 +32,7 @@ config:
     - '*.js'
     - '*.mjs'
     - '*.config.*'
-    - '.github/**/*'
+    - '.github/**'
     - 'tailwind.config.ts'
     - 'tsconfig.json'
     - 'next.config.mjs'
@@ -44,7 +44,7 @@ documentation:
 - changed-files:
   - any-glob-to-any-file:
     - '**/*.md'
-    - 'docs/**/*'
+    - 'docs/**'
 
 # Label for dependency changes
 dependencies:
@@ -58,7 +58,7 @@ dependencies:
 ci-cd:
 - changed-files:
   - any-glob-to-any-file:
-    - '.github/workflows/**/*'
+    - '.github/workflows/**'
     - '.github/**/*.yml'
     - '.github/**/*.yaml'
 
@@ -74,13 +74,13 @@ database:
 ui:
 - changed-files:
   - any-glob-to-any-file:
-    - 'components/ui/**/*'
+    - 'components/ui/**'
 
 # Label for authentication related changes
 auth:
 - changed-files:
   - any-glob-to-any-file:
-    - 'app/auth/**/*'
+    - 'app/auth/**'
     - 'app/context/AuthContext.tsx'
     - 'functions/auth.js'
 
@@ -88,7 +88,7 @@ auth:
 admin:
 - changed-files:
   - any-glob-to-any-file:
-    - 'app/admin/**/*'
+    - 'app/admin/**'
     - 'app/context/AdminContext.tsx'
     - 'scripts/*admin*'
 
@@ -96,7 +96,7 @@ admin:
 ecommerce:
 - changed-files:
   - any-glob-to-any-file:
-    - 'app/cart/**/*'
-    - 'app/checkout/**/*'
+    - 'app/cart/**'
+    - 'app/checkout/**'
     - 'app/context/CartContext.tsx'
-    - 'app/menu/**/*'
+    - 'app/menu/**'
