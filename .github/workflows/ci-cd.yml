@@ -64,5 +64,5 @@ jobs:
       - name: Deploy
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ./functions/dreamy-delights-882ff-firebase-adminsdk-fbsvc-e3a40b9a80.json
-        run: firebase deploy && echo "deployment completed"
+        run: firebase deploy
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
