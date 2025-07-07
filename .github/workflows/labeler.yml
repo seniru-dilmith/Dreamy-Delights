@@ -1,5 +1,4 @@
 name: Labeler
-
 on:
   pull_request_target:
 
@@ -12,11 +11,8 @@ jobs:
       issues: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Apply labels
-        uses: actions/labeler@v5     
+        uses: actions/labeler@v5
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           configuration-path: .github/labeler.yml
