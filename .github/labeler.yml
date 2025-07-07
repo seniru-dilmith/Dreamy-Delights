@@ -37,6 +37,6 @@ dependencies:
   - "yarn.lock"
 
 # Label for CI/CD changes
-ci-cd:
+CiCd:
   - ".github/workflows/**/*"
   - ".github/**/*.yml"
