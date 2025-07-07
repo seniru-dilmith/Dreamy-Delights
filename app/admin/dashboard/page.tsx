@@ -136,7 +136,7 @@ export default function AdminDashboard() {
     { id: "overview", label: "Overview", icon: BarChart3, permission: null },
     { id: "products", label: "Products", icon: Package, permission: ADMIN_PERMISSIONS.MANAGE_PRODUCTS },
     { id: "orders", label: "Orders", icon: ShoppingCart, permission: ADMIN_PERMISSIONS.MANAGE_ORDERS },
-    // { id: "users", label: "Users", icon: Users, permission: ADMIN_PERMISSIONS.MANAGE_USERS },
+    { id: "users", label: "Users", icon: Users, permission: ADMIN_PERMISSIONS.MANAGE_USERS },
     { id: "messages", label: "Messages", icon: Mail, permission: ADMIN_PERMISSIONS.MANAGE_CONTENT },
     { id: "content", label: "Content", icon: FileText, permission: ADMIN_PERMISSIONS.MANAGE_CONTENT },
     { id: "testimonials", label: "Testimonials", icon: Star, permission: ADMIN_PERMISSIONS.MANAGE_TESTIMONIALS },
@@ -405,9 +405,9 @@ export default function AdminDashboard() {
             <OrderManagement />
           </TabsContent>
 
-          {/* <TabsContent value="users">
+          <TabsContent value="users">
             <UserManagement />
-          </TabsContent> */}
+          </TabsContent>
 
           <TabsContent value="messages">
             <ContactMessageManagement />

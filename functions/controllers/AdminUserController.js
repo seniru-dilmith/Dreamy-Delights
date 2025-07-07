@@ -28,7 +28,7 @@ class AdminUserController {
       console.error("Error fetching users:", error);
       res.status(500).json({
         success: false,
-        message: error.message || "Failed to fetch users",
+        message: error,
       });
     }
   }
