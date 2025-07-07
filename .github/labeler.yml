@@ -36,7 +36,8 @@ dependencies:
   - "pnpm-lock.yaml"
   - "yarn.lock"
 
-ci/cd:
+# Label for CI/CD changes
+ci-cd:
   - ".github/workflows/**/*"
   - ".github/labeler.yml"
   - ".github/issue_template.md"
