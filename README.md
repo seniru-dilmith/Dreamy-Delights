@@ -111,13 +111,20 @@ npm install
 # 3️⃣ Setup environment (create .env file)
 cp .env.example .env
 
-# 4️⃣ Launch the backend functions
-cd functions && npm install && cd ..
+# 4️⃣ Configure Firebase serverless functions
+cd functions && npm install
+cp .env.example .env
 
 # 5️⃣ Start the development server
 npm run dev
 
 # 🎉 Visit http://localhost:3000 and witness the magic!
+```
+
+### To start firebase emulator
+
+```bash
+npm run emulators:start
 ```
 
 ### 🔧 **Available Commands**
