@@ -10,7 +10,8 @@
     "start": "next start",
     "postbuild": "next-sitemap",
     "deploy": "firebase deploy",
-    "deploy-functions": "cd functions && firebase deploy --only functions"
+    "deploy-functions": "cd functions && firebase deploy --only functions",
+    "emulators:start": "firebase emulators:start"
   },
   "dependencies": {
     "@emotion/is-prop-valid": "latest",
