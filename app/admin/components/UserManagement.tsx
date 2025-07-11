@@ -288,9 +288,13 @@ export default function UserManagement() {
               <>
                 <div className="rounded-md border">
                   <Table>
-                    <TableHeader>
+                  <TableHeader>
                       <TableRow>
                         <TableHead>User</TableHead>
+                        <TableHead>Photo</TableHead>
+                        <TableHead>Email Verified</TableHead>
+                        <TableHead>Provider</TableHead>
+                        <TableHead>Phone</TableHead>
                         <TableHead>Role</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Join Date</TableHead>
@@ -303,22 +307,62 @@ export default function UserManagement() {
                     <TableBody>
                       {filteredUsers.map(user => (
                         <TableRow key={user.id}>
+                          {/* User Name & Email */}
                           <TableCell>
                             <div>
                               <p className="font-medium">{user.name}</p>
                               <p className="text-sm text-gray-600">{user.email}</p>
                             </div>
                           </TableCell>
+                          {/* PhotoURL */}
+                          <TableCell>
+                            {user.photoURL ? (
+                              <img src={user.photoURL} alt="Profile" className="w-8 h-8 rounded-full object-cover" />
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </TableCell>
+                          {/* Email Verified */}
+                          <TableCell>
+                            {user.emailVerified ? (
+                              <Badge className="bg-green-100 text-green-800">Verified</Badge>
+                            ) : (
+                              <Badge className="bg-red-100 text-red-800">Unverified</Badge>
+                            )}
+                          </TableCell>
+                          {/* ProviderId */}
+                          <TableCell>
+                            {user.providerId && user.providerId.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                {user.providerId.map((provider, idx) => (
+                                  <Badge key={idx} className="bg-blue-100 text-blue-800">{provider}</Badge>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </TableCell>
+                          {/* Phone Number */}
+                          <TableCell>
+                            {user.phoneNumber ? user.phoneNumber : <span className="text-gray-400">-</span>}
+                          </TableCell>
+                          {/* Role */}
                           <TableCell>{getRoleBadge(user.role)}</TableCell>
+                          {/* Status */}
                           <TableCell>{getStatusBadge(user.status)}</TableCell>
+                          {/* Join Date */}
                           <TableCell className="text-sm">
                             {formatDate(user.joinDate)}
                           </TableCell>
+                          {/* Last Login */}
                           <TableCell className="text-sm">
                             {formatDate(user.lastLogin)}
                           </TableCell>
+                          {/* Orders */}
                           <TableCell>{user.totalOrders}</TableCell>
+                          {/* Total Spent */}
                           <TableCell>Rs. {user.totalSpent.toFixed(2)}</TableCell>
+                          {/* Actions */}
                           <TableCell>
                             <div className="flex space-x-2">
                               <div className="flex items-center space-x-1">
@@ -334,7 +378,6 @@ export default function UserManagement() {
                                     <SelectItem value="banned">Banned</SelectItem>
                                   </SelectContent>
                                 </Select>
-                                
                                 {pendingStatusChanges[user.id] && (
                                   <>
                                     <Button
@@ -356,7 +399,6 @@ export default function UserManagement() {
                                   </>
                                 )}
                               </div>
-
                               {user.role !== "customer" && (
                                 <Select
                                   value={user.role}
@@ -372,7 +414,6 @@ export default function UserManagement() {
                                   </SelectContent>
                                 </Select>
                               )}
-
                               <Button size="sm" variant="outline">
                                 <Eye className="w-4 h-4" />
                               </Button>
