@@ -79,9 +79,19 @@ jobs:
       - name: Generate version tag
         id: version
         run: |
-          # Get the latest tag, or start from v1.0.0 if none exists
-          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
-          echo "Latest tag: $LATEST_TAG"
+          # Fetch all tags to ensure we have the complete list
+          git fetch --tags
+          
+          # Get the absolute latest tag from the whole repo, sorted by version number
+          # If no tags exist, default to v1.0.0
+          LATEST_TAG=$(git tag --sort=-v:refname | head -n 1)
+          
+          if [ -z "$LATEST_TAG" ]; then
+            LATEST_TAG="v1.0.0"
+            echo "No tags found. Defaulting to $LATEST_TAG"
+          else
+            echo "Latest existing tag found: $LATEST_TAG"
+          fi
           
           # Extract version numbers
           VERSION=${LATEST_TAG#v}
@@ -94,8 +104,15 @@ jobs:
           PATCH=$((PATCH + 1))
           NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
           
+          # Final Safety Check: If the calculated version somehow exists, keep incrementing
+          while git rev-parse "$NEW_VERSION" >/dev/null 2>&1; do
+            echo "Tag $NEW_VERSION already exists. Incrementing again..."
+            PATCH=$((PATCH + 1))
+            NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
+          done
+          
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "New version: $NEW_VERSION"
+          echo "Final Version to Release: $NEW_VERSION"
 
       - name: Determine release title
         id: release_title
